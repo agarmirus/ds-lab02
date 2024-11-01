@@ -47,18 +47,17 @@ func (dao *PostgresHotelDAO) Get() (list.List, error) {
 
 			for rows.Next() {
 				var id, stars, price int
-				var name, country, city, address, uidStr string
+				var name, country, city, address string
+				var uid uuid.UUID
 
 				err = rows.Scan(
-					&id, &uidStr,
+					&id, &uid,
 					&name, &country,
 					&city, &address,
 					&stars, &price,
 				)
 
 				if err == nil {
-					uid, _ := uuid.Parse(uidStr)
-
 					curHotel := models.Hotel{}
 					curHotel.SetId(id)
 					curHotel.SetUid(uid)
@@ -141,18 +140,17 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 
 			for rows.Next() {
 				var id, stars, price int
-				var name, country, city, address, uidStr string
+				var name, country, city, address string
+				var uid uuid.UUID
 
 				err = rows.Scan(
-					&id, &uidStr,
+					&id, &uid,
 					&name, &country,
 					&city, &address,
 					&stars, &price,
 				)
 
 				if err == nil {
-					uid, _ := uuid.Parse(uidStr)
-
 					curHotel := models.Hotel{}
 					curHotel.SetId(id)
 					curHotel.SetUid(uid)

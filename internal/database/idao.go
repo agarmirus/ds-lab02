@@ -3,6 +3,8 @@ package database
 import "container/list"
 
 type IDAO[T any] interface {
+	SetConnectionString(string)
+
 	Create(T) (T, error)
 
 	GetById(T) (T, error)

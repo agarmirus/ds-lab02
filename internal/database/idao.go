@@ -5,12 +5,12 @@ import "container/list"
 type IDAO[T any] interface {
 	SetConnectionString(string)
 
-	Create(T) (T, error)
+	Create(*T) (T, error)
 
-	GetById(T) (T, error)
+	GetById(*T) (T, error)
 	GetByAttribute(string, string) (list.List, error)
 
-	Update(T) (T, error)
+	Update(*T) (T, error)
 
-	Delete(T) error
+	Delete(*T) error
 }

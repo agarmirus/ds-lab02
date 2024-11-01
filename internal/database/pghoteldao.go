@@ -24,10 +24,8 @@ func (dao *PostgresHotelDAO) SetConnectionString(connStr string) {
 	dao.connStr = connStr
 }
 
-func (dao *PostgresHotelDAO) Create(*models.Hotel) (models.Hotel, error) {
-	var err error = errors.New("PostgresHotelDAO.Create is not implemented")
-
-	return models.Hotel{}, err
+func (dao *PostgresHotelDAO) Create(*models.Hotel) error {
+	return errors.New("PostgresHotelDAO.Create() is not implemented")
 }
 
 func (dao *PostgresHotelDAO) Get() (list.List, error) {
@@ -97,19 +95,17 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (models.Hotel, error) 
 		var row *sql.Row = db.QueryRow(queryString)
 
 		var stars, price int
-		var name, country, city, address, uidStr string
+		var uid uuid.UUID
+		var name, country, city, address string
 
 		err = row.Scan(
-			&id, &uidStr,
+			&id, &uid,
 			&name, &country,
 			&city, &address,
 			&stars, &price,
 		)
 
 		if err == nil {
-			uid, _ := uuid.Parse(uidStr)
-
-			result := models.Hotel{}
 			result.SetId(id)
 			result.SetUid(uid)
 			result.SetName(name)

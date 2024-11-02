@@ -14,7 +14,6 @@ func NewGatewayService(port int) IService {
 }
 
 func (service *GatewayService) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
-
 }
 
 func (service *GatewayService) handleUserRequest(res http.ResponseWriter, req *http.Request) {

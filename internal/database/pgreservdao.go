@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/google/uuid"
+	_ "github.com/lib/pq"
+
+	"github.com/agarmirus/ds-lab02/internal/models"
 )
 
 type PostgresReservationDAO struct {
@@ -49,7 +51,7 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) error
 }
 
 func (dao *PostgresReservationDAO) Get() (list.List, error) {
-	return list.List{}, errors.New("PostgresReservationDAO.Get() is not implemented")
+	return list.List{}, errors.New("PostgresReservationDAO.Get() method is not implemented")
 }
 
 func (dao *PostgresReservationDAO) GetById(reservation *models.Reservation) (models.Reservation, error) {
@@ -148,7 +150,7 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 }
 
 func (dao *PostgresReservationDAO) Update(*models.Reservation) (models.Reservation, error) {
-	return models.Reservation{}, errors.New("PostgresReservationDAO.Update() is not implemented")
+	return models.Reservation{}, errors.New("PostgresReservationDAO.Update() method is not implemented")
 }
 
 func (dao *PostgresReservationDAO) Delete(reservation *models.Reservation) error {

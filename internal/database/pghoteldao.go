@@ -25,7 +25,7 @@ func (dao *PostgresHotelDAO) SetConnectionString(connStr string) {
 }
 
 func (dao *PostgresHotelDAO) Create(*models.Hotel) error {
-	return errors.New("PostgresHotelDAO.Create() is not implemented")
+	return errors.New("PostgresHotelDAO.Create() method is not implemented")
 }
 
 func (dao *PostgresHotelDAO) Get() (list.List, error) {
@@ -173,9 +173,9 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 }
 
 func (dao *PostgresHotelDAO) Update(*models.Hotel) (models.Hotel, error) {
-	return models.Hotel{}, errors.New("PostgresHotelDAO.Update is not implemented")
+	return models.Hotel{}, errors.New("PostgresHotelDAO.Update() method is not implemented")
 }
 
 func (dao *PostgresHotelDAO) Delete(*models.Hotel) error {
-	return errors.New("PostgresHotelDAO.Delete is not implemented")
+	return errors.New("PostgresHotelDAO.Delete() method is not implemented")
 }

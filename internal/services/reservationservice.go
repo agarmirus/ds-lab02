@@ -8,19 +8,16 @@ import (
 	"github.com/agarmirus/ds-lab02/internal/models"
 )
 
-type HotelDAO = database.IDAO[models.Hotel]
-type ReservationDAO = database.IDAO[models.Reservation]
-
 type ReservationService struct {
-	hotelDAO  HotelDAO
-	reservDAO ReservationDAO
+	hotelDAO  database.IDAO[models.Hotel]
+	reservDAO database.IDAO[models.Reservation]
 
 	port int
 }
 
 func NewReservationService(
-	hotelDAO HotelDAO,
-	reservDAO ReservationDAO,
+	hotelDAO database.IDAO[models.Hotel],
+	reservDAO database.IDAO[models.Reservation],
 	port int,
 ) IService {
 	return &ReservationService{hotelDAO, reservDAO, port}

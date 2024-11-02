@@ -1,6 +1,6 @@
 package services
 
 type IService interface {
-	Prepare(string) error
+	Prepare() error
 	Run() error
 }

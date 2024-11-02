@@ -14,12 +14,16 @@ func NewGatewayService(port int) IService {
 }
 
 func (service *GatewayService) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
+
 }
 
 func (service *GatewayService) handleUserRequest(res http.ResponseWriter, req *http.Request) {
 }
 
 func (service *GatewayService) handleReservationsRequest(res http.ResponseWriter, req *http.Request) {
+}
+
+func (service *GatewayService) handleReservationUidRequest(res http.ResponseWriter, req *http.Request) {
 }
 
 func (service *GatewayService) handleLoyaltyRequest(res http.ResponseWriter, req *http.Request) {
@@ -29,6 +33,7 @@ func (service *GatewayService) Prepare() error {
 	http.HandleFunc("/api/v1/hotels", service.handleHotelsRequest)
 	http.HandleFunc("/api/v1/me", service.handleUserRequest)
 	http.HandleFunc("/api/v1/reservations", service.handleReservationsRequest)
+	http.HandleFunc("/api/v1/reservations/{reservationUid}", service.handleReservationUidRequest)
 	http.HandleFunc("/api/v1/loyalty", service.handleLoyaltyRequest)
 
 	return nil

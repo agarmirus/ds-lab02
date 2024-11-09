@@ -7,4 +7,6 @@ type IErrorResponse interface {
 	AddFieldError(field string, err string)
 
 	ClearFieldErrors()
+
+	ToString() string
 }

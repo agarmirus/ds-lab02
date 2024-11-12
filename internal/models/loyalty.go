@@ -28,22 +28,22 @@ func (loyalty *Loyalty) SetDiscount(discount int) {
 	loyalty.discount = discount
 }
 
-func (loyalty *Loyalty) GetId() int {
+func (loyalty Loyalty) GetId() int {
 	return loyalty.id
 }
 
-func (loyalty *Loyalty) GetUsername() string {
+func (loyalty Loyalty) GetUsername() string {
 	return loyalty.username
 }
 
-func (loyalty *Loyalty) GetReservationCount() int {
+func (loyalty Loyalty) GetReservationCount() int {
 	return loyalty.reservationCount
 }
 
-func (loyalty *Loyalty) GetStatus() string {
+func (loyalty Loyalty) GetStatus() string {
 	return loyalty.status
 }
 
-func (loyalty *Loyalty) GetDiscount() int {
+func (loyalty Loyalty) GetDiscount() int {
 	return loyalty.discount
 }

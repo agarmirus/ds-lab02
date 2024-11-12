@@ -25,18 +25,18 @@ func (payment *Payment) SetPrice(price int) {
 	payment.price = price
 }
 
-func (payment *Payment) GetId() int {
+func (payment Payment) GetId() int {
 	return payment.id
 }
 
-func (payment *Payment) GetUid() uuid.UUID {
+func (payment Payment) GetUid() uuid.UUID {
 	return payment.uid
 }
 
-func (payment *Payment) GetStatus() string {
+func (payment Payment) GetStatus() string {
 	return payment.status
 }
 
-func (payment *Payment) GetPrice() int {
+func (payment Payment) GetPrice() int {
 	return payment.price
 }

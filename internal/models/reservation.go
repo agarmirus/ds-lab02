@@ -29,11 +29,11 @@ func (reservation *Reservation) SetUsername(username string) {
 	reservation.username = username
 }
 
-func (reservation *Reservation) SetPaymentUid(payment Payment) {
+func (reservation *Reservation) SetPayment(payment Payment) {
 	reservation.payment = payment
 }
 
-func (reservation *Reservation) SetHotelId(hotel Hotel) {
+func (reservation *Reservation) SetHotel(hotel Hotel) {
 	reservation.hotel = hotel
 }
 
@@ -49,34 +49,34 @@ func (reservation *Reservation) SetEndDate(endDate time.Time) {
 	reservation.endDate = endDate
 }
 
-func (reservation *Reservation) GetId() int {
+func (reservation Reservation) GetId() int {
 	return reservation.id
 }
 
-func (reservation *Reservation) GetUid() uuid.UUID {
+func (reservation Reservation) GetUid() uuid.UUID {
 	return reservation.uid
 }
 
-func (reservation *Reservation) GetUsername() string {
+func (reservation Reservation) GetUsername() string {
 	return reservation.username
 }
 
-func (reservation *Reservation) GetPaymentUid() Payment {
+func (reservation Reservation) GetPayment() Payment {
 	return reservation.payment
 }
 
-func (reservation *Reservation) GetHotelId() Hotel {
+func (reservation Reservation) GetHotel() Hotel {
 	return reservation.hotel
 }
 
-func (reservation *Reservation) GetStatus() string {
+func (reservation Reservation) GetStatus() string {
 	return reservation.status
 }
 
-func (reservation *Reservation) GetStartDate() time.Time {
+func (reservation Reservation) GetStartDate() time.Time {
 	return reservation.startDate
 }
 
-func (reservation *Reservation) GetEndDate() time.Time {
+func (reservation Reservation) GetEndDate() time.Time {
 	return reservation.endDate
 }

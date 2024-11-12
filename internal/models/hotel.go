@@ -45,34 +45,34 @@ func (hotel *Hotel) SetPrice(price int) {
 	hotel.price = price
 }
 
-func (hotel *Hotel) GetId() int {
+func (hotel Hotel) GetId() int {
 	return hotel.id
 }
 
-func (hotel *Hotel) GetUid() uuid.UUID {
+func (hotel Hotel) GetUid() uuid.UUID {
 	return hotel.uid
 }
 
-func (hotel *Hotel) GetName() string {
+func (hotel Hotel) GetName() string {
 	return hotel.name
 }
 
-func (hotel *Hotel) GetCountry() string {
+func (hotel Hotel) GetCountry() string {
 	return hotel.country
 }
 
-func (hotel *Hotel) GetCity() string {
+func (hotel Hotel) GetCity() string {
 	return hotel.city
 }
 
-func (hotel *Hotel) GetAddress() string {
+func (hotel Hotel) GetAddress() string {
 	return hotel.address
 }
 
-func (hotel *Hotel) GetStars() int {
+func (hotel Hotel) GetStars() int {
 	return hotel.stars
 }
 
-func (hotel *Hotel) GetPrice() int {
+func (hotel Hotel) GetPrice() int {
 	return hotel.price
 }

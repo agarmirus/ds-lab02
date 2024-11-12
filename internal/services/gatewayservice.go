@@ -242,6 +242,40 @@ func formReservationsReadResultJSON(reservationsSlice []models.Reservation, loya
 	return resultJson
 }
 
+func formUserReservationsReadResultJSON(reservationsSlice []models.Reservation) []byte {
+	totalElements := len(reservationsSlice)
+
+	var rawReservationsMapsSlice []map[string]interface{}
+
+	for i := 0; i < totalElements; i++ {
+		hotel := reservationsSlice[i].GetHotel()
+		payment := reservationsSlice[i].GetPayment()
+
+		var rawHotelMap map[string]interface{}
+		rawHotelMap["hotelUid"] = hotel.GetUid()
+		rawHotelMap["name"] = hotel.GetName()
+		rawHotelMap["fullAddress"] = hotel.GetAddress()
+		rawHotelMap["stars"] = hotel.GetStars()
+
+		var rawPaymentMap map[string]interface{}
+		rawPaymentMap["status"] = payment.GetStatus()
+		rawPaymentMap["price"] = payment.GetPrice()
+
+		var rawReservationMap map[string]interface{}
+		rawReservationMap["reservationUid"] = reservationsSlice[i].GetUid()
+		rawReservationMap["hotel"] = rawHotelMap
+		rawReservationMap["startDate"] = reservationsSlice[i].GetStartDate()
+		rawReservationMap["endDate"] = reservationsSlice[i].GetEndDate()
+		rawReservationMap["status"] = reservationsSlice[i].GetStatus()
+		rawReservationMap["payment"] = rawPaymentMap
+
+		rawReservationsMapsSlice = append(rawReservationsMapsSlice, rawReservationMap)
+	}
+
+	resultJson, _ := json.Marshal(rawReservationsMapsSlice)
+	return resultJson
+}
+
 func (service *GatewayService) handleHotelsRead(res http.ResponseWriter, req *http.Request) {
 	page, err := strconv.Atoi(req.FormValue("page"))
 
@@ -462,6 +496,41 @@ func (service *GatewayService) handleUserRead(res http.ResponseWriter, req *http
 	}
 }
 
+func (service *GatewayService) handleUserReservationsRead(res http.ResponseWriter, req *http.Request) {
+	var err error
+
+	username := strings.Trim(req.Header.Get("X-User-Name"), " ")
+
+	reservationsSlice, err := service.handleReservationsGetByUsername(username)
+
+	if err == nil && len(reservationsSlice) > 0 {
+		reservationsSlice, err = service.handleHotelsGetByReservations(reservationsSlice)
+
+		if err == nil {
+			reservationsSlice, err = service.handlePaymentsGetByReservations(reservationsSlice)
+
+			if err == nil {
+				resultJSON := formUserReservationsReadResultJSON(reservationsSlice)
+
+				res.WriteHeader(http.StatusOK)
+				res.Write(resultJSON)
+			} else {
+				res.WriteHeader(http.StatusServiceUnavailable)
+			}
+		} else {
+			res.WriteHeader(http.StatusServiceUnavailable)
+		}
+	} else if err == nil {
+		res.WriteHeader(http.StatusNotFound)
+	} else {
+		res.WriteHeader(http.StatusServiceUnavailable)
+	}
+}
+
+func (service *GatewayService) handleUserReservationCreate(res http.ResponseWriter, req *http.Request) {
+	// TODO
+}
+
 func (service *GatewayService) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == "GET" {
 		service.handleHotelsRead(res, req)
@@ -479,7 +548,13 @@ func (service *GatewayService) handleUserRequest(res http.ResponseWriter, req *h
 }
 
 func (service *GatewayService) handleReservationsRequest(res http.ResponseWriter, req *http.Request) {
-	// TODO
+	if req.Method == "GET" {
+		service.handleUserReservationsRead(res, req)
+	} else if req.Method == "POST" {
+		service.handleUserReservationCreate(res, req)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 
 func (service *GatewayService) handleReservationUidRequest(res http.ResponseWriter, req *http.Request) {

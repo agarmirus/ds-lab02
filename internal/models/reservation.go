@@ -7,14 +7,14 @@ import (
 )
 
 type Reservation struct {
-	id         int
-	uid        uuid.UUID
-	username   string
-	paymentUid uuid.UUID
-	hotelId    int
-	status     string
-	startDate  time.Time
-	endDate    time.Time
+	id        int
+	uid       uuid.UUID
+	username  string
+	payment   Payment
+	hotel     Hotel
+	status    string
+	startDate time.Time
+	endDate   time.Time
 }
 
 func (reservation *Reservation) SetId(id int) {
@@ -29,12 +29,12 @@ func (reservation *Reservation) SetUsername(username string) {
 	reservation.username = username
 }
 
-func (reservation *Reservation) SetPaymentUid(paymentUid uuid.UUID) {
-	reservation.paymentUid = paymentUid
+func (reservation *Reservation) SetPaymentUid(payment Payment) {
+	reservation.payment = payment
 }
 
-func (reservation *Reservation) SetHotelId(hotelId int) {
-	reservation.hotelId = hotelId
+func (reservation *Reservation) SetHotelId(hotel Hotel) {
+	reservation.hotel = hotel
 }
 
 func (reservation *Reservation) SetStatus(status string) {
@@ -61,12 +61,12 @@ func (reservation *Reservation) GetUsername() string {
 	return reservation.username
 }
 
-func (reservation *Reservation) GetPaymentUid() uuid.UUID {
-	return reservation.paymentUid
+func (reservation *Reservation) GetPaymentUid() Payment {
+	return reservation.payment
 }
 
-func (reservation *Reservation) GetHotelId() int {
-	return reservation.hotelId
+func (reservation *Reservation) GetHotelId() Hotel {
+	return reservation.hotel
 }
 
 func (reservation *Reservation) GetStatus() string {

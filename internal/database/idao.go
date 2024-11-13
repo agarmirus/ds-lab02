@@ -5,7 +5,7 @@ import "container/list"
 type IDAO[T any] interface {
 	SetConnectionString(string)
 
-	Create(*T) error
+	Create(*T) (T, error)
 
 	Get() (list.List, error)
 	GetById(*T) (T, error)
@@ -14,4 +14,5 @@ type IDAO[T any] interface {
 	Update(*T) (T, error)
 
 	Delete(*T) error
+	DeleteByAttr(string, string) error
 }

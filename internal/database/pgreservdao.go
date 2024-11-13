@@ -17,6 +17,10 @@ type PostgresReservationDAO struct {
 	connStr string
 }
 
+func NewPostgresReservationDAO(connStr string) IDAO[models.Reservation] {
+	return &PostgresReservationDAO{connStr}
+}
+
 func (dao *PostgresReservationDAO) SetConnectionString(connStr string) {
 	dao.connStr = connStr
 }
@@ -49,7 +53,7 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 			row := db.QueryRow(
 				`insert into reservation (reservation_uid, username, payment_uid, hotel_id, status, start_date, end_date)
 				values ('$1', '$2', '$3', $4, '$5', '$6', '$7')
-				returning *`,
+				returning *;`,
 				reservation.Uid, reservation.Username,
 				reservation.PaymentUid, reservation.HotelId,
 				reservation.Status, reservation.StartDate.Format(`%F`),
@@ -86,7 +90,7 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 	if localErr == nil {
 		var rows *sql.Rows
 		rows, localErr = db.Query(
-			`select * from reservation where $1 == '$2'`,
+			`select * from reservation where $1 == '$2';`,
 			attrName, attrValue,
 		)
 		for localErr == nil && rows.Next() {
@@ -119,7 +123,7 @@ func (dao *PostgresReservationDAO) DeleteByAttr(attrName string, attrValue strin
 
 	if localErr == nil {
 		_, localErr = db.Exec(
-			`delete from reservation where $1 = '$2'`,
+			`delete from reservation where $1 = '$2';`,
 			attrName, attrValue,
 		)
 

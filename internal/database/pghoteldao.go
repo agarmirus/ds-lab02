@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
+	_ "github.com/jackc/pgx"
+
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
 )

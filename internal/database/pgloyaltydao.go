@@ -36,29 +36,37 @@ func (dao *PostgresLoyaltyDAO) GetById(loyalty *models.Loyalty) (models.Loyalty,
 }
 
 func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, localErr := sql.Open(`postgres`, dao.connStr)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-	if localErr == nil {
-		var rows *sql.Rows
-		rows, localErr = db.Query(
-			`select * from loyalty where $1 = '$2';`,
-			attrName, attrValue,
-		)
-		for localErr == nil && rows.Next() {
-			var loyalty models.Loyalty
-			localErr = rows.Scan(&loyalty)
-
-			if localErr != nil {
-				err = errors.New(serverrors.ErrQueryResRead)
-			}
-
-			resLst.PushBack(loyalty)
-		}
-	} else {
-		err = errors.New(serverrors.ErrDatabaseConnection)
+	if err != nil {
+		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	return resLst, err
+	rows, err := db.Query(
+		`select * from loyalty where $1 = '$2';`,
+		attrName, attrValue,
+	)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return resLst, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		return resLst, nil
+	}
+
+	for rows.Next() {
+		var loyalty models.Loyalty
+		err = rows.Scan(&loyalty)
+
+		if err != nil {
+			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		resLst.PushBack(loyalty)
+	}
+
+	return resLst, nil
 }
 
 func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (models.Loyalty, error) {

@@ -47,29 +47,31 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 	err = validateReservation(reservation)
 
 	if err == nil {
-		db, localErr := sql.Open(`postgres`, dao.connStr)
+		return newReservation, err
+	}
 
-		if localErr == nil {
-			row := db.QueryRow(
-				`insert into reservation (reservation_uid, username, payment_uid, hotel_id, status, start_date, end_date)
-				values ('$1', '$2', '$3', $4, '$5', '$6', '$7')
-				returning *;`,
-				reservation.Uid, reservation.Username,
-				reservation.PaymentUid, reservation.HotelId,
-				reservation.Status, reservation.StartDate.Format(`%F`),
-				reservation.EndDate.Format(`%F`),
-			)
-			localErr = row.Scan(&newReservation)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-			if localErr != nil {
-				if errors.Is(localErr, sql.ErrNoRows) {
-					err = errors.New(serverrors.ErrEntityInsert)
-				} else {
-					err = errors.New(serverrors.ErrQueryResRead)
-				}
-			}
+	if err != nil {
+		return newReservation, errors.New(serverrors.ErrDatabaseConnection)
+	}
+
+	row := db.QueryRow(
+		`insert into reservation (reservation_uid, username, payment_uid, hotel_id, status, start_date, end_date)
+		values ('$1', '$2', '$3', $4, '$5', '$6', '$7')
+		returning *;`,
+		reservation.Uid, reservation.Username,
+		reservation.PaymentUid, reservation.HotelId,
+		reservation.Status, reservation.StartDate.Format(`%F`),
+		reservation.EndDate.Format(`%F`),
+	)
+	err = row.Scan(&newReservation)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = errors.New(serverrors.ErrEntityInsert)
 		} else {
-			err = errors.New(serverrors.ErrDatabaseConnection)
+			err = errors.New(serverrors.ErrQueryResRead)
 		}
 	}
 
@@ -85,29 +87,37 @@ func (dao *PostgresReservationDAO) GetById(reservation *models.Reservation) (mod
 }
 
 func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, localErr := sql.Open(`postgres`, dao.connStr)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-	if localErr == nil {
-		var rows *sql.Rows
-		rows, localErr = db.Query(
-			`select * from reservation where $1 == '$2';`,
-			attrName, attrValue,
-		)
-		for localErr == nil && rows.Next() {
-			var reservation models.Reservation
-			localErr = rows.Scan(&reservation)
-
-			if localErr != nil {
-				err = errors.New(serverrors.ErrQueryResRead)
-			}
-
-			resLst.PushBack(reservation)
-		}
-	} else {
-		err = errors.New(serverrors.ErrDatabaseConnection)
+	if err != nil {
+		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	return resLst, err
+	rows, err := db.Query(
+		`select * from reservation where $1 == '$2';`,
+		attrName, attrValue,
+	)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return resLst, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		return resLst, nil
+	}
+
+	for rows.Next() {
+		var reservation models.Reservation
+		err = rows.Scan(&reservation)
+
+		if err != nil {
+			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		resLst.PushBack(reservation)
+	}
+
+	return resLst, nil
 }
 
 func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (models.Reservation, error) {
@@ -119,18 +129,20 @@ func (dao *PostgresReservationDAO) Delete(reservation *models.Reservation) error
 }
 
 func (dao *PostgresReservationDAO) DeleteByAttr(attrName string, attrValue string) (err error) {
-	db, localErr := sql.Open(`postgres`, dao.connStr)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-	if localErr == nil {
-		_, localErr = db.Exec(
-			`delete from reservation where $1 = '$2';`,
-			attrName, attrValue,
-		)
-
-		if localErr != nil {
-			err = errors.New(serverrors.ErrQueryExec)
-		}
+	if err != nil {
+		return errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	return err
+	_, err = db.Exec(
+		`delete from reservation where $1 = '$2';`,
+		attrName, attrValue,
+	)
+
+	if err != nil {
+		return errors.New(serverrors.ErrQueryExec)
+	}
+
+	return nil
 }

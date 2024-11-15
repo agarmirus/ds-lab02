@@ -28,50 +28,54 @@ func (dao *PostgresHotelDAO) Create(hotel *models.Hotel) (models.Hotel, error) {
 }
 
 func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
-	db, localErr := sql.Open(`postgres`, dao.connStr)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-	if localErr == nil {
-		var rows *sql.Rows
-		rows, localErr = db.Query(`select * from hotels;`)
-		for localErr == nil && rows.Next() {
-			var hotel models.Hotel
-			localErr = rows.Scan(&hotel)
-
-			if localErr != nil {
-				err = errors.New(serverrors.ErrQueryResRead)
-			}
-
-			resLst.PushBack(hotel)
-		}
-	} else {
-		err = errors.New(serverrors.ErrDatabaseConnection)
+	if err != nil {
+		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	return resLst, err
+	rows, err := db.Query(`select * from hotels;`)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return resLst, errors.New(serverrors.ErrQueryResRead)
+	}
+
+	for rows.Next() {
+		var hotel models.Hotel
+		err = rows.Scan(&hotel)
+
+		if err != nil {
+			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		resLst.PushBack(hotel)
+	}
+
+	return resLst, nil
 }
 
 func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel, err error) {
 	if hotel.Id <= 0 {
-		err = errors.New(serverrors.ErrInvalidHotelId)
-	} else {
-		db, localErr := sql.Open(`postgres`, dao.connStr)
+		return resHotel, errors.New(serverrors.ErrInvalidHotelId)
+	}
 
-		if localErr == nil {
-			row := db.QueryRow(
-				`select * from hotels where id = $1;`,
-				hotel.Id,
-			)
-			localErr = row.Scan(&resHotel)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-			if localErr != nil {
-				if errors.Is(localErr, sql.ErrNoRows) {
-					err = errors.New(serverrors.ErrEntityNotFound)
-				} else {
-					err = errors.New(serverrors.ErrQueryResRead)
-				}
-			}
+	if err != nil {
+		return resHotel, errors.New(serverrors.ErrDatabaseConnection)
+	}
+
+	row := db.QueryRow(
+		`select * from hotels where id = $1;`,
+		hotel.Id,
+	)
+	err = row.Scan(&resHotel)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = errors.New(serverrors.ErrEntityNotFound)
 		} else {
-			err = errors.New(serverrors.ErrDatabaseConnection)
+			err = errors.New(serverrors.ErrQueryResRead)
 		}
 	}
 
@@ -79,29 +83,37 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel
 }
 
 func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, localErr := sql.Open(`postgres`, dao.connStr)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-	if localErr == nil {
-		var rows *sql.Rows
-		rows, localErr = db.Query(
-			`select * from hotels where $1 = '$2';`,
-			attrName, attrValue,
-		)
-		for localErr == nil && rows.Next() {
-			var hotel models.Hotel
-			localErr = rows.Scan(&hotel)
-
-			if localErr != nil {
-				err = errors.New(serverrors.ErrQueryResRead)
-			}
-
-			resLst.PushBack(hotel)
-		}
-	} else {
-		err = errors.New(serverrors.ErrDatabaseConnection)
+	if err != nil {
+		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	return resLst, err
+	rows, err := db.Query(
+		`select * from hotels where $1 = '$2';`,
+		attrName, attrValue,
+	)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return resLst, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		return resLst, nil
+	}
+
+	for rows.Next() {
+		var hotel models.Hotel
+		err = rows.Scan(&hotel)
+
+		if err != nil {
+			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		resLst.PushBack(hotel)
+	}
+
+	return resLst, nil
 }
 
 func (dao *PostgresHotelDAO) Update(hotel *models.Hotel) (models.Hotel, error) {

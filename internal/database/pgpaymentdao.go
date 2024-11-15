@@ -36,29 +36,37 @@ func (dao *PostgresPaymentDAO) GetById(payment *models.Payment) (models.Payment,
 }
 
 func (dao *PostgresPaymentDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, localErr := sql.Open(`postgres`, dao.connStr)
+	db, err := sql.Open(`postgres`, dao.connStr)
 
-	if localErr == nil {
-		var rows *sql.Rows
-		rows, localErr = db.Query(
-			`select * from payment where $1 = '$2';`,
-			attrName, attrValue,
-		)
-		for localErr == nil && rows.Next() {
-			var payment models.Payment
-			localErr = rows.Scan(&payment)
-
-			if localErr != nil {
-				err = errors.New(serverrors.ErrQueryResRead)
-			}
-
-			resLst.PushBack(payment)
-		}
-	} else {
-		err = errors.New(serverrors.ErrDatabaseConnection)
+	if err != nil {
+		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	return resLst, err
+	rows, err := db.Query(
+		`select * from payment where $1 = '$2';`,
+		attrName, attrValue,
+	)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return resLst, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		return resLst, nil
+	}
+
+	for rows.Next() {
+		var payment models.Payment
+		err = rows.Scan(&payment)
+
+		if err != nil {
+			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+		}
+
+		resLst.PushBack(payment)
+	}
+
+	return resLst, nil
 }
 
 func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (models.Payment, error) {

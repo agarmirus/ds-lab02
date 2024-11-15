@@ -1,10 +1,18 @@
 package controllers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/agarmirus/ds-lab02/internal/models"
+	"github.com/agarmirus/ds-lab02/internal/serverrors"
 	"github.com/agarmirus/ds-lab02/internal/services"
+	"github.com/google/uuid"
 )
 
 type GatewayController struct {
@@ -22,19 +30,293 @@ func NewGatewayController(
 	return &GatewayController{host, port, service}
 }
 
+func validateCrReservReq(createReservReq *models.CreateReservationRequest) (validErrRes models.ValidationErrorResponse, err error) {
+	if uuid.Validate(createReservReq.HotelUid) != nil {
+		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `hotelUid`, Error: `invalid uid`})
+	}
+
+	startDate, err := time.Parse(`%F`, createReservReq.StartDate)
+
+	if err != nil {
+		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `startDate`, Error: `invalid date format`})
+	}
+
+	endDate, err := time.Parse(`%F`, createReservReq.EndDate)
+
+	if err != nil {
+		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `endDate`, Error: `invalid date format`})
+	} else if startDate.Unix() > endDate.Unix() {
+		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `startDate`, Error: `invalid date period`})
+		err = errors.New(serverrors.ErrInvalidReservDates)
+	}
+
+	if err != nil {
+		validErrRes.Message = `invalid reservation request data`
+	}
+
+	return validErrRes, err
+}
+
+func (controller *GatewayController) handleAllHotelsGet(res http.ResponseWriter, req *http.Request) {
+	page, pageParseErr := strconv.Atoi(req.FormValue(`page`))
+	pageSize, pageSizeParseErr := strconv.Atoi(req.FormValue(`size`))
+
+	if pageParseErr != nil || pageSizeParseErr != nil || page <= 0 || pageSize <= 0 {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	pagRes, err := controller.service.ReadAllHotels()
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var pageResJSON []byte
+	pageResJSON, err = json.Marshal(pagRes)
+
+	if err == nil {
+		res.WriteHeader(http.StatusOK)
+		res.Header().Add(`Content-Type`, `application/json`)
+		res.Write(pageResJSON)
+	} else {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (controller *GatewayController) handleUserInfoGet(res http.ResponseWriter, req *http.Request) {
+	username := req.Header.Get(`X-User-Name`)
+
+	if strings.Trim(username, ` `) == `` {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userInfoRes, err := controller.service.ReadUserInfo(username)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var userInfoResJSON []byte
+	userInfoResJSON, err = json.Marshal(userInfoRes)
+
+	if err == nil {
+		res.WriteHeader(http.StatusOK)
+		res.Header().Add(`Content-Type`, `application/json`)
+		res.Write(userInfoResJSON)
+	} else {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (controller *GatewayController) handleUserReservationsGet(res http.ResponseWriter, req *http.Request) {
+	username := req.Header.Get(`X-User-Name`)
+
+	if strings.Trim(username, ` `) == `` {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	reservsResSlice, err := controller.service.ReadUserReservations(username)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var reservsResSliceJSON []byte
+	reservsResSliceJSON, err = json.Marshal(reservsResSlice)
+
+	if err == nil {
+		res.WriteHeader(http.StatusOK)
+		res.Header().Add(`Content-Type`, `application/json`)
+		res.Write(reservsResSliceJSON)
+	} else {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (controller *GatewayController) handleNewReservationPost(res http.ResponseWriter, req *http.Request) {
+	username := req.Header.Get(`X-User-Name`)
+
+	if strings.Trim(username, ` `) == `` {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var reqBody []byte
+	_, err := req.Body.Read(reqBody)
+
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var crReservReq models.CreateReservationRequest
+	err = json.Unmarshal(reqBody, &crReservReq)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var validErrRes models.ValidationErrorResponse
+	validErrRes, err = validateCrReservReq(&crReservReq)
+
+	if err == nil {
+		var crReservRes models.CreateReservationResponse
+		crReservRes, err = controller.service.CreateReservation(username, &crReservReq)
+
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var crReservResJSON []byte
+		crReservResJSON, err = json.Marshal(crReservRes)
+
+		if err == nil {
+			res.WriteHeader(http.StatusOK)
+			res.Header().Add(`Content-Type`, `application/json`)
+			res.Write(crReservResJSON)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		var validErrResJSON []byte
+		validErrResJSON, err = json.Marshal(validErrRes)
+
+		if err == nil {
+			res.WriteHeader(http.StatusBadRequest)
+			res.Header().Add(`Content-Type`, `application/json`)
+			res.Write(validErrResJSON)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
+	}
+}
+
+func (controller *GatewayController) handleSingleReservationGet(res http.ResponseWriter, req *http.Request) {
+	reservationUid := req.PathValue("reservationUid")
+	username := req.Header.Get(`X-User-Name`)
+
+	if strings.Trim(username, ` `) == `` || uuid.Validate(reservationUid) != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	reservRes, err := controller.service.ReadReservation(reservationUid, username)
+
+	if err != nil {
+		// TODO: Check for no results case
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	reservResJSON, err := json.Marshal(reservRes)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusOK)
+	res.Header().Add(`Content-Type`, `application/json`)
+	res.Write(reservResJSON)
+}
+
+func (controller *GatewayController) handleSingleReservationDelete(res http.ResponseWriter, req *http.Request) {
+	reservationUid := req.PathValue("reservationUid")
+	username := req.Header.Get(`X-User-Name`)
+
+	if strings.Trim(username, ` `) == `` || uuid.Validate(reservationUid) != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err := controller.service.DeleteReservation(reservationUid, username)
+
+	if err != nil {
+		// TODO: Check for no results case
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusNoContent)
+}
+
+func (controller *GatewayController) handleLoyaltyGet(res http.ResponseWriter, req *http.Request) {
+	username := req.Header.Get(`X-User-Name`)
+
+	if strings.Trim(username, ` `) == `` {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	loyaltyInfoRes, err := controller.service.ReadUserLoyalty(username)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	loyaltyInfoResJSON, err := json.Marshal(loyaltyInfoRes)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusOK)
+	res.Header().Add(`Content-Type`, `application/json`)
+	res.Write(loyaltyInfoResJSON)
+}
+
 func (controller *GatewayController) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		controller.handleAllHotelsGet(res, req)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 
 func (controller *GatewayController) handleUserRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		controller.handleUserInfoGet(res, req)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 
 func (controller *GatewayController) handleReservationsRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		controller.handleUserReservationsGet(res, req)
+	} else if req.Method == `POST` {
+		controller.handleNewReservationPost(res, req)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 
 func (controller *GatewayController) handleSingleReservationRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		controller.handleSingleReservationGet(res, req)
+	} else if req.Method == `DELETE` {
+		controller.handleSingleReservationDelete(res, req)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 
 func (controller *GatewayController) handleLoyaltyRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		controller.handleLoyaltyGet(res, req)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 
 func (controller *GatewayController) Prepare() error {

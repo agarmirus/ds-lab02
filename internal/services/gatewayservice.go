@@ -43,76 +43,6 @@ func NewGatewayService(
 	}
 }
 
-func hotelToHotelReponse(
-	hotelRes *models.HotelResponse,
-	hotel *models.Hotel,
-) {
-	hotelRes.HotelUid = hotel.Uid
-	hotelRes.Name = hotel.Name
-	hotelRes.Country = hotel.Country
-	hotelRes.City = hotel.City
-	hotelRes.Address = hotel.Address
-	hotelRes.Stars = hotel.Stars
-	hotelRes.Price = hotel.Price
-}
-
-func hotelsSliceToPagRes(
-	pagRes *models.PagiationResponse,
-	hotelsSlice []models.Hotel,
-	page int,
-	pageSize int,
-) {
-	pagRes.Page = page
-	pagRes.PageSize = pageSize
-	pagRes.TotalElements = len(hotelsSlice)
-
-	for i := 0; i < pagRes.TotalElements; i++ {
-		var hotelRes models.HotelResponse
-		hotelToHotelReponse(&hotelRes, &hotelsSlice[i])
-
-		pagRes.Items = append(pagRes.Items, hotelRes)
-	}
-}
-
-func reservsSliceToUserInfoRes(
-	userInfoRes *models.UserInfoResponse,
-	userReservsSlice []models.Reservation,
-	hotelsMap map[int]models.Hotel,
-	paymentsMap map[string]models.Payment,
-	loyalty *models.Loyalty,
-) {
-}
-
-func reservToReservRes(
-	reservRes *models.ReservationResponse,
-	reservation *models.Reservation,
-	hotel *models.Hotel,
-	payment *models.Payment,
-) {
-}
-
-func reservsSliceToReservRes(
-	reservsResSlice []models.ReservationResponse,
-	userReservsSlice []models.Reservation,
-	hotelsMap map[int]models.Hotel,
-	paymentsMap map[string]models.Payment,
-) {
-}
-
-func reservToCrReservRes(
-	crReservRes *models.CreateReservationResponse,
-	reservation *models.Reservation,
-	payment *models.Payment,
-	loyalty *models.Loyalty,
-) {
-}
-
-func loyaltyToLoyaltyInfoRes(
-	loyatlyInfoRes *models.LoyaltyInfoResponse,
-	loyalty *models.Loyalty,
-) {
-}
-
 func (service *GatewayService) performAllHotelsGetRequest() (hotelsSlice []models.Hotel, err error) {
 	req, err := http.NewRequest(
 		"GET",
@@ -239,7 +169,7 @@ func (service *GatewayService) ReadAllHotels(
 		return pagRes, err
 	}
 
-	hotelsSliceToPagRes(&pagRes, hotelsSlice, page, pageSize)
+	models.HotelsSliceToPagRes(&pagRes, hotelsSlice, page, pageSize)
 
 	return pagRes, nil
 }
@@ -275,7 +205,7 @@ func (service *GatewayService) ReadUserInfo(
 		return userInfoRes, err
 	}
 
-	reservsSliceToUserInfoRes(&userInfoRes, userReservsSlice, hotelsMap, paymentsMap, &loyalty)
+	models.ReservsSliceToUserInfoRes(&userInfoRes, userReservsSlice, hotelsMap, paymentsMap, &loyalty)
 
 	return userInfoRes, nil
 }
@@ -305,7 +235,7 @@ func (service *GatewayService) ReadUserReservations(
 		return reservsResSlice, err
 	}
 
-	reservsSliceToReservRes(reservsResSlice, userReservsSlice, hotelsMap, paymentsMap)
+	models.ReservsSliceToReservRes(reservsResSlice, userReservsSlice, hotelsMap, paymentsMap)
 
 	return reservsResSlice, nil
 }
@@ -369,7 +299,7 @@ func (service *GatewayService) CreateReservation(
 		return crReservRes, err
 	}
 
-	reservToCrReservRes(&crReservRes, &reservation, &payment, &loyalty)
+	models.ReservToCrReservRes(&crReservRes, &reservation, &payment, &loyalty)
 
 	return crReservRes, nil
 }
@@ -408,7 +338,7 @@ func (service *GatewayService) ReadReservation(
 		return reservRes, err
 	}
 
-	reservToReservRes(&reservRes, &reservation, &hotel, &payment)
+	models.ReservToReservRes(&reservRes, &reservation, &hotel, &payment)
 
 	return reservRes, nil
 }
@@ -475,7 +405,7 @@ func (service *GatewayService) ReadUserLoyalty(
 		return loyaltyInfoRes, err
 	}
 
-	loyaltyToLoyaltyInfoRes(&loyaltyInfoRes, &loyalty)
+	models.LoyaltyToLoyaltyInfoRes(&loyaltyInfoRes, &loyalty)
 
 	return loyaltyInfoRes, nil
 }

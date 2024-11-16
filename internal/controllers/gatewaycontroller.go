@@ -2,15 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
-	"github.com/agarmirus/ds-lab02/internal/serverrors"
 	"github.com/agarmirus/ds-lab02/internal/services"
 	"github.com/google/uuid"
 )
@@ -30,33 +27,6 @@ func NewGatewayController(
 	return &GatewayController{host, port, service}
 }
 
-func validateCrReservReq(createReservReq *models.CreateReservationRequest) (validErrRes models.ValidationErrorResponse, err error) {
-	if uuid.Validate(createReservReq.HotelUid) != nil {
-		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `hotelUid`, Error: `invalid uid`})
-	}
-
-	startDate, err := time.Parse(`%F`, createReservReq.StartDate)
-
-	if err != nil {
-		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `startDate`, Error: `invalid date format`})
-	}
-
-	endDate, err := time.Parse(`%F`, createReservReq.EndDate)
-
-	if err != nil {
-		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `endDate`, Error: `invalid date format`})
-	} else if startDate.Unix() > endDate.Unix() {
-		validErrRes.Errors = append(validErrRes.Errors, models.ErrorDiscription{Field: `startDate`, Error: `invalid date period`})
-		err = errors.New(serverrors.ErrInvalidReservDates)
-	}
-
-	if err != nil {
-		validErrRes.Message = `invalid reservation request data`
-	}
-
-	return validErrRes, err
-}
-
 func (controller *GatewayController) handleAllHotelsGet(res http.ResponseWriter, req *http.Request) {
 	page, pageParseErr := strconv.Atoi(req.FormValue(`page`))
 	pageSize, pageSizeParseErr := strconv.Atoi(req.FormValue(`size`))
@@ -66,7 +36,7 @@ func (controller *GatewayController) handleAllHotelsGet(res http.ResponseWriter,
 		return
 	}
 
-	pagRes, err := controller.service.ReadAllHotels()
+	pagRes, err := controller.service.ReadAllHotels(page, pageSize)
 
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -164,7 +134,7 @@ func (controller *GatewayController) handleNewReservationPost(res http.ResponseW
 	}
 
 	var validErrRes models.ValidationErrorResponse
-	validErrRes, err = validateCrReservReq(&crReservReq)
+	validErrRes, err = models.ValidateCrReservReq(&crReservReq)
 
 	if err == nil {
 		var crReservRes models.CreateReservationResponse

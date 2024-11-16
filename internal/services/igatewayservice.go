@@ -5,7 +5,7 @@ import (
 )
 
 type IGatewayService interface {
-	ReadAllHotels() (models.PagiationResponse, error)
+	ReadAllHotels(int, int) (models.PagiationResponse, error)
 	ReadUserInfo(string) (models.UserInfoResponse, error)
 	ReadUserReservations(string) ([]models.ReservationResponse, error)
 	CreateReservation(string, *models.CreateReservationRequest) (models.CreateReservationResponse, error)

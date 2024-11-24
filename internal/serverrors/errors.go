@@ -16,10 +16,10 @@ const ErrInvalidCrReservReq string = `invalid create reservation request data`
 
 const ErrInvalidReservUid string = `invalid reservation UID`
 
-// const ErrInvalidReservUsername string = `invalid reservation username field`
-// const ErrInvalidReservPayUID string = `invalid reservation payment UID field`
-// const ErrInvalidReservHotelId string = `invalid reservation hotel ID field`
-// const ErrInvalidReservStatus string = `invalid reservation status field`
+const ErrInvalidReservUsername string = `invalid reservation username field`
+const ErrInvalidReservPayUID string = `invalid reservation payment UID field`
+const ErrInvalidReservHotelId string = `invalid reservation hotel ID field`
+const ErrInvalidReservStatus string = `invalid reservation status field`
 const ErrInvalidReservDates string = `invalid reservation dates`
 
 const ErrInvalidHotelId string = `invalid hotel ID field`
@@ -37,6 +37,9 @@ const ErrNewRequestForming string = `error while creating new request`
 const ErrRequestSend string = `error while sending request to service`
 const ErrResponseRead string = `error while reading service response`
 const ErrResponseParse string = `error while parsing service response`
+
+// Internal errors
+const ErrJSONParse string = `error while writting entity into json`
 
 // Unknown :P
 const ErrUnknown string = `unknown error`

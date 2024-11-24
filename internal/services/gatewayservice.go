@@ -1,11 +1,15 @@
 package services
 
+// TODO: проверить коды ответов
+
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,7 +26,7 @@ type GatewayService struct {
 	paymentServicePort int
 
 	loyaltyServiceHost string
-	loyaltyServicePost int
+	loyaltyServicePort int
 }
 
 func NewGatewayService(
@@ -31,7 +35,7 @@ func NewGatewayService(
 	paymentServiceHost string,
 	paymentServicePort int,
 	loyaltyServiceHost string,
-	loyaltyServicePost int,
+	loyaltyServicePort int,
 ) IGatewayService {
 	return &GatewayService{
 		reservServiceHost,
@@ -39,7 +43,7 @@ func NewGatewayService(
 		paymentServiceHost,
 		paymentServicePort,
 		loyaltyServiceHost,
-		loyaltyServicePost,
+		loyaltyServicePort,
 	}
 }
 
@@ -83,41 +87,312 @@ func (service *GatewayService) performAllHotelsGetRequest() (hotelsSlice []model
 func (service *GatewayService) performUserReservsGetRequest(
 	username string,
 ) (userReservsSlice []models.Reservation, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/reservations",
+			service.reservServiceHost,
+			service.reservServicePort,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return userReservsSlice, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	req.Header.Add(`X-User-Name`, username)
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return userReservsSlice, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return userReservsSlice, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &userReservsSlice)
+
+	if err != nil {
+		return userReservsSlice, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return userReservsSlice, nil
+}
+
+func (service *GatewayService) performHotelByIdGetRequest(
+	hotelId int,
+) (hotel models.Hotel, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/hotels",
+			service.reservServiceHost,
+			service.reservServicePort,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	req.Header.Add(`Hotel-Id`, strconv.Itoa(hotelId))
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &hotel)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return hotel, nil
 }
 
 func (service *GatewayService) performReservsHotelsGetRequest(
 	userReservsSlice []models.Reservation,
 ) (hotelsMap map[int]models.Hotel, err error) {
+	hotelsMap = make(map[int]models.Hotel)
+	totalElements := len(userReservsSlice)
+
+	for i := 0; i < totalElements; i++ {
+		hotel, err := service.performHotelByIdGetRequest(userReservsSlice[i].HotelId)
+
+		if err != nil {
+			return hotelsMap, err
+		}
+
+		hotelsMap[hotel.Id] = hotel
+	}
+
+	return hotelsMap, nil
 }
 
-func (service *GatewayService) performPaymentByUidGet(
+func (service *GatewayService) performPaymentByUidGetRequest(
 	paymentUid string,
 ) (payment models.Payment, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/payment/%s",
+			service.paymentServiceHost,
+			service.paymentServicePort,
+			paymentUid,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &payment)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return payment, nil
 }
 
 func (service *GatewayService) performReservsPaymentsGetRequest(
 	userReservsSlice []models.Reservation,
-) (paymentsSlice map[string]models.Payment, err error) {
+) (paymentsMap map[string]models.Payment, err error) {
+	paymentsMap = make(map[string]models.Payment)
+	totalElements := len(userReservsSlice)
+
+	for i := 0; i < totalElements; i++ {
+		payment, err := service.performPaymentByUidGetRequest(userReservsSlice[i].PaymentUid)
+
+		if err != nil {
+			return paymentsMap, err
+		}
+
+		paymentsMap[payment.Uid] = payment
+	}
+
+	return paymentsMap, nil
 }
 
 func (service *GatewayService) performUserLoyaltyGetRequest(
 	username string,
 ) (loyalty models.Loyalty, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/loyalty",
+			service.loyaltyServiceHost,
+			service.loyaltyServicePort,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	req.Header.Add(`X-User-Name`, username)
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &loyalty)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return loyalty, nil
 }
 
 func (service *GatewayService) performHotelByUidGetRequest(
 	hotelUid string,
 ) (hotel models.Hotel, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/hotels/%s",
+			service.reservServiceHost,
+			service.reservServicePort,
+			hotelUid,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &hotel)
+
+	if err != nil {
+		return hotel, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return hotel, nil
 }
 
 func (service *GatewayService) performPaymentPostRequest(
 	price int,
 ) (payment models.Payment, err error) {
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/payment",
+			service.reservServiceHost,
+			service.reservServicePort,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	req.Header.Add(`Price`, strconv.Itoa(price))
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &payment)
+
+	if err != nil {
+		return payment, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return payment, nil
 }
 
 func (service *GatewayService) performLoyaltyPatchRequest(
 	loyalty *models.Loyalty,
 ) (err error) {
+	loyaltyJSON, err := json.Marshal(loyalty)
+
+	if err != nil {
+		return errors.New(serverrors.ErrJSONParse)
+	}
+
+	req, err := http.NewRequest(
+		"PATCH",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/loyalty/%d",
+			service.loyaltyServiceHost,
+			service.loyaltyServicePort,
+			loyalty.Id,
+		),
+		bytes.NewBuffer(loyaltyJSON),
+	)
+
+	if err != nil {
+		return errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	_, err = (&http.Client{}).Do(req)
+
+	if err != nil {
+		return errors.New(serverrors.ErrRequestSend)
+	}
+
+	return nil
 }
 
 func (service *GatewayService) performReservationPostRequest(
@@ -128,31 +403,200 @@ func (service *GatewayService) performReservationPostRequest(
 	startDate string,
 	endDate string,
 ) (reservation models.Reservation, err error) {
+	var newReservation models.Reservation
+	newReservation.Username = username
+	newReservation.PaymentUid = paymentUid
+	newReservation.HotelId = hotelId
+	newReservation.Status = status
+	newReservation.StartDate, _ = time.Parse(`%F`, startDate)
+	newReservation.EndDate, _ = time.Parse(`%F`, endDate)
+
+	newReservJSON, err := json.Marshal(newReservation)
+
+	if err != nil {
+		return reservation, errors.New(serverrors.ErrJSONParse)
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/payment",
+			service.reservServiceHost,
+			service.reservServicePort,
+		),
+		bytes.NewBuffer(newReservJSON),
+	)
+
+	if err != nil {
+		return reservation, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return reservation, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return reservation, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &reservation)
+
+	if err != nil {
+		return reservation, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return reservation, nil
 }
 
 func (service *GatewayService) performReservGetRequest(
 	reservUid string,
 ) (reserv models.Reservation, err error) {
-}
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/reservations/%s",
+			service.reservServiceHost,
+			service.reservServicePort,
+			reservUid,
+		),
+		nil,
+	)
 
-func (service *GatewayService) performHotelByIdGetRequest(
-	hoteId int,
-) (hotel models.Hotel, err error) {
+	if err != nil {
+		return reserv, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return reserv, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return reserv, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &reserv)
+
+	if err != nil {
+		return reserv, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return reserv, nil
 }
 
 func (service *GatewayService) performLoyaltyGetByUsernameRequest(
 	username string,
 ) (loyalty models.Loyalty, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/loyalty",
+			service.loyaltyServiceHost,
+			service.loyaltyServicePort,
+		),
+		nil,
+	)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	req.Header.Add(`X-User-Name`, username)
+	res, err := (&http.Client{}).Do(req)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrRequestSend)
+	}
+
+	var resBody []byte
+	_, err = res.Body.Read(resBody)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrResponseRead)
+	}
+
+	err = json.Unmarshal(resBody, &loyalty)
+
+	if err != nil {
+		return loyalty, errors.New(serverrors.ErrResponseParse)
+	}
+
+	return loyalty, nil
 }
 
 func (service *GatewayService) performReservPatchRequest(
 	reservation *models.Reservation,
 ) (err error) {
+	reservJSON, err := json.Marshal(reservation)
+
+	if err != nil {
+		return errors.New(serverrors.ErrJSONParse)
+	}
+
+	req, err := http.NewRequest(
+		"PATCH",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/reservations/%s",
+			service.loyaltyServiceHost,
+			service.loyaltyServicePort,
+			reservation.Uid,
+		),
+		bytes.NewBuffer(reservJSON),
+	)
+
+	if err != nil {
+		return errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	_, err = (&http.Client{}).Do(req)
+
+	if err != nil {
+		return errors.New(serverrors.ErrRequestSend)
+	}
+
+	return nil
 }
 
 func (service *GatewayService) performPaymentPatchRequest(
 	payment *models.Payment,
 ) (err error) {
+	paymentJSON, err := json.Marshal(payment)
+
+	if err != nil {
+		return errors.New(serverrors.ErrJSONParse)
+	}
+
+	req, err := http.NewRequest(
+		"PATCH",
+		fmt.Sprintf(
+			"http://%s:%d/api/v1/payment/%s",
+			service.paymentServiceHost,
+			service.paymentServicePort,
+			payment.Uid,
+		),
+		bytes.NewBuffer(paymentJSON),
+	)
+
+	if err != nil {
+		return errors.New(serverrors.ErrNewRequestForming)
+	}
+
+	_, err = (&http.Client{}).Do(req)
+
+	if err != nil {
+		return errors.New(serverrors.ErrRequestSend)
+	}
+
+	return nil
 }
 
 func (service *GatewayService) ReadAllHotels(
@@ -332,7 +776,7 @@ func (service *GatewayService) ReadReservation(
 		return reservRes, err
 	}
 
-	payment, err := service.performPaymentByUidGet(reservation.PaymentUid)
+	payment, err := service.performPaymentByUidGetRequest(reservation.PaymentUid)
 
 	if err != nil {
 		return reservRes, err
@@ -368,7 +812,7 @@ func (service *GatewayService) DeleteReservation(
 		return err
 	}
 
-	payment, err := service.performPaymentByUidGet(reservation.PaymentUid)
+	payment, err := service.performPaymentByUidGetRequest(reservation.PaymentUid)
 
 	if err != nil {
 		return err

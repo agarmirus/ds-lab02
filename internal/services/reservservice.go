@@ -71,3 +71,7 @@ func (service *ReservationService) ReadReservByUid(reservUid string) (reservatio
 
 	return reservsLst.Front().Value.(models.Reservation), nil
 }
+
+func (service *ReservationService) UpdateReservByUid(reservation *models.Reservation) (updatedReservation models.Reservation, err error) {
+	return service.reservsDAO.Update(reservation)
+}

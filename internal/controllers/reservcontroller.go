@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -88,7 +89,7 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWriter, req *http.Request) {
 	hotelUid := req.PathValue("hotelUid")
 
-	if hotelUid == `` {
+	if strings.Trim(hotelUid, ` `) == `` {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -117,40 +118,9 @@ func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWr
 }
 
 func (controller *ReservationController) handleReservsByUsernameGet(res http.ResponseWriter, req *http.Request) {
-	reservUid := req.PathValue("reservUid")
-
-	if reservUid == `` {
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	reservation, err := controller.service.ReadReservByUid(reservUid)
-
-	if err != nil {
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
-			res.WriteHeader(http.StatusNotFound)
-		} else {
-			res.WriteHeader(http.StatusInternalServerError)
-		}
-
-		return
-	}
-
-	reservJSON, err := json.Marshal(reservation)
-
-	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-	}
-
-	res.WriteHeader(http.StatusOK)
-	res.Header().Add(`Content-Type`, `application/json`)
-	res.Write(reservJSON)
-}
-
-func (controller *ReservationController) handleReservByUidGet(res http.ResponseWriter, req *http.Request) {
 	username := req.Header.Get(`X-User-Name`)
 
-	if username == `` {
+	if strings.Trim(username, ` `) == `` {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -187,10 +157,41 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 	res.Write(reservsSliceJSON)
 }
 
+func (controller *ReservationController) handleReservByUidGet(res http.ResponseWriter, req *http.Request) {
+	reservUid := req.PathValue(`reservUid`)
+
+	if strings.Trim(reservUid, ` `) == `` {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	reservation, err := controller.service.ReadReservByUid(reservUid)
+
+	if err != nil {
+		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+			res.WriteHeader(http.StatusNotFound)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	reservJSON, err := json.Marshal(reservation)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+
+	res.WriteHeader(http.StatusOK)
+	res.Header().Add(`Content-Type`, `application/json`)
+	res.Write(reservJSON)
+}
+
 func (controller *ReservationController) handleReservByUidPatch(res http.ResponseWriter, req *http.Request) {
 	reservUid := req.PathValue("reservUid")
 
-	if reservUid == `` {
+	if strings.Trim(reservUid, ` `) == `` {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -270,7 +271,7 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 
 func (controller *ReservationController) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
-		if req.Header.Get(`Hotel-Id`) == `` {
+		if strings.Trim(req.Header.Get(`Hotel-Id`), ` `) == `` {
 			controller.handleAllHotelsGet(res, req)
 		} else {
 			controller.handleHotelByIdGet(res, req)
@@ -290,7 +291,7 @@ func (controller *ReservationController) handleHotelWithUidRequest(res http.Resp
 
 func (controller *ReservationController) handleReservsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
-		if req.Header.Get(`X-User-Name`) != `` {
+		if strings.Trim(req.Header.Get(`X-User-Name`), ` `) != `` {
 			controller.handleReservsByUsernameGet(res, req)
 		} else {
 			res.WriteHeader(http.StatusMethodNotAllowed)

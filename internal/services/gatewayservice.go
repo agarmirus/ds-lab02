@@ -242,46 +242,6 @@ func (service *GatewayService) performReservsPaymentsGetRequest(
 	return paymentsMap, nil
 }
 
-func (service *GatewayService) performUserLoyaltyGetRequest(
-	username string,
-) (loyalty models.Loyalty, err error) {
-	req, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf(
-			"http://%s:%d/api/v1/loyalty",
-			service.loyaltyServiceHost,
-			service.loyaltyServicePort,
-		),
-		nil,
-	)
-
-	if err != nil {
-		return loyalty, errors.New(serverrors.ErrNewRequestForming)
-	}
-
-	req.Header.Add(`X-User-Name`, username)
-	res, err := (&http.Client{}).Do(req)
-
-	if err != nil {
-		return loyalty, errors.New(serverrors.ErrRequestSend)
-	}
-
-	var resBody []byte
-	_, err = res.Body.Read(resBody)
-
-	if err != nil {
-		return loyalty, errors.New(serverrors.ErrResponseRead)
-	}
-
-	err = json.Unmarshal(resBody, &loyalty)
-
-	if err != nil {
-		return loyalty, errors.New(serverrors.ErrResponseParse)
-	}
-
-	return loyalty, nil
-}
-
 func (service *GatewayService) performHotelByUidGetRequest(
 	hotelUid string,
 ) (hotel models.Hotel, err error) {
@@ -493,7 +453,7 @@ func (service *GatewayService) performReservGetRequest(
 	return reserv, nil
 }
 
-func (service *GatewayService) performLoyaltyGetByUsernameRequest(
+func (service *GatewayService) performLoyaltyByUsernameGetRequest(
 	username string,
 ) (loyalty models.Loyalty, err error) {
 	req, err := http.NewRequest(
@@ -643,7 +603,7 @@ func (service *GatewayService) ReadUserInfo(
 		return userInfoRes, err
 	}
 
-	loyalty, err := service.performUserLoyaltyGetRequest(username)
+	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil && !errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 		return userInfoRes, err
@@ -704,7 +664,7 @@ func (service *GatewayService) CreateReservation(
 		return crReservRes, err
 	}
 
-	loyalty, err := service.performUserLoyaltyGetRequest(username)
+	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil && !errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 		return crReservRes, err
@@ -825,7 +785,7 @@ func (service *GatewayService) DeleteReservation(
 		return err
 	}
 
-	loyalty, err := service.performLoyaltyGetByUsernameRequest(username)
+	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil {
 		return err
@@ -843,7 +803,7 @@ func (service *GatewayService) ReadUserLoyalty(
 		return loyaltyInfoRes, errors.New(serverrors.ErrInvalidUsername)
 	}
 
-	loyalty, err := service.performLoyaltyGetByUsernameRequest(username)
+	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil {
 		return loyaltyInfoRes, err

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -89,7 +90,7 @@ func (controller *PaymentController) handlePaymentByUidGet(res http.ResponseWrit
 func (controller *PaymentController) handlePaymentByUidPatch(res http.ResponseWriter, req *http.Request) {
 	paymentUid := req.PathValue("paymentUid")
 
-	if paymentUid == `` {
+	if strings.Trim(paymentUid, ` `) == `` {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -128,7 +129,7 @@ func (controller *PaymentController) handlePaymentByUidPatch(res http.ResponseWr
 
 func (controller *PaymentController) handlePaymentRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `POST` {
-		if req.Header.Get(`Price`) != `` {
+		if strings.Trim(req.Header.Get(`Price`), ` `) != `` {
 			controller.handlePaymentByPricePost(res, req)
 		} else {
 			res.WriteHeader(http.StatusBadRequest)

@@ -420,7 +420,7 @@ func (service *GatewayService) performReservationPostRequest(
 	req, err := http.NewRequest(
 		"POST",
 		fmt.Sprintf(
-			"http://%s:%d/api/v1/payment",
+			"http://%s:%d/api/v1/reservations",
 			service.reservServiceHost,
 			service.reservServicePort,
 		),

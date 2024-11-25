@@ -1,5 +1,7 @@
 package controllers
 
+// TODO: reservation post
+
 import (
 	"encoding/json"
 	"errors"
@@ -85,7 +87,7 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 	res.Write(hotelJSON)
 }
 
-func (controller *ReservationController) hangleHotelByUidGet(res http.ResponseWriter, req *http.Request) {
+func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWriter, req *http.Request) {
 	hotelUid := req.PathValue("hotelUid")
 
 	if hotelUid == `` {
@@ -211,6 +213,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 		return
 	}
 
+	reservation.Uid = reservUid
 	_, err = controller.service.UpdateReservByUid(&reservation)
 
 	if err != nil {
@@ -228,7 +231,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 
 func (controller *ReservationController) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
-		if res.Header().Get(`Hotel-Id`) == `` {
+		if req.Header.Get(`Hotel-Id`) == `` {
 			controller.handleAllHotelsGet(res, req)
 		} else {
 			controller.handleHotelByIdGet(res, req)
@@ -240,7 +243,7 @@ func (controller *ReservationController) handleHotelsRequest(res http.ResponseWr
 
 func (controller *ReservationController) handleHotelWithUidRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
-		controller.hangleHotelByUidGet(res, req)
+		controller.handleHotelByUidGet(res, req)
 	} else {
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -248,7 +251,7 @@ func (controller *ReservationController) handleHotelWithUidRequest(res http.Resp
 
 func (controller *ReservationController) handleReservsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
-		if res.Header().Get(`X-User-Name`) != `` {
+		if req.Header.Get(`X-User-Name`) != `` {
 			controller.handleReservsByUsernameGet(res, req)
 		} else {
 			res.WriteHeader(http.StatusMethodNotAllowed)

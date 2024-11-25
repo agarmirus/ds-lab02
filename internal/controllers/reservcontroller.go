@@ -22,7 +22,7 @@ type ReservationController struct {
 func NewReservationController(
 	host string,
 	port int,
-	service services.IGatewayService,
+	service services.IReservationService,
 ) IController {
 	return &ReservationController{host, port, service}
 }

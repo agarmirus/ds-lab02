@@ -45,6 +45,10 @@ func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWri
 
 	hotelsSliceJSON, err := json.Marshal(hotelsSlice)
 
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+
 	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
 	res.Write(hotelsSliceJSON)
@@ -71,6 +75,10 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 	}
 
 	hotelJSON, err := json.Marshal(hotel)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 
 	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
@@ -99,6 +107,10 @@ func (controller *ReservationController) hangleHotelByUidGet(res http.ResponseWr
 
 	hotelJSON, err := json.Marshal(hotel)
 
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+
 	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
 	res.Write(hotelJSON)
@@ -125,6 +137,10 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 	}
 
 	reservJSON, err := json.Marshal(reservation)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 
 	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
@@ -160,6 +176,10 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 	}
 
 	reservsSliceJSON, err := json.Marshal(reservsSlice)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 
 	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)

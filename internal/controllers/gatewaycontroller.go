@@ -118,9 +118,9 @@ func (controller *GatewayController) handleNewReservationPost(res http.ResponseW
 	}
 
 	var reqBody []byte
-	_, err := req.Body.Read(reqBody)
+	n, err := req.Body.Read(reqBody)
 
-	if err != nil {
+	if err != nil || n <= 0 {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}

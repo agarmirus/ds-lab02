@@ -1,7 +1,5 @@
 package controllers
 
-// TODO: reservation post
-
 import (
 	"encoding/json"
 	"errors"
@@ -198,9 +196,9 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	}
 
 	var reqBody []byte
-	_, err := req.Body.Read(reqBody)
+	n, err := req.Body.Read(reqBody)
 
-	if err != nil {
+	if err != nil || n <= 0 {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -227,6 +225,47 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	}
 
 	res.WriteHeader(http.StatusOK)
+}
+
+func (controller *ReservationController) handleReservPost(res http.ResponseWriter, req *http.Request) {
+	var reqBody []byte
+	n, err := req.Body.Read(reqBody)
+
+	if err != nil || n <= 0 {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var reservation models.Reservation
+	err = json.Unmarshal(reqBody, &reservation)
+
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	newReservation, err := controller.service.UpdateReservByUid(&reservation)
+
+	if err != nil {
+		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+			res.WriteHeader(http.StatusNotFound)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	newReservationJSON, err := json.Marshal(&newReservation)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusOK)
+	res.Header().Add(`Content-Type`, `application/json`)
+	res.Write(newReservationJSON)
 }
 
 func (controller *ReservationController) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
@@ -256,6 +295,8 @@ func (controller *ReservationController) handleReservsRequest(res http.ResponseW
 		} else {
 			res.WriteHeader(http.StatusMethodNotAllowed)
 		}
+	} else if req.Method == `POST` {
+		controller.handleReservPost(res, req)
 	} else {
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -264,7 +305,7 @@ func (controller *ReservationController) handleReservsRequest(res http.ResponseW
 func (controller *ReservationController) handleReservWithUidRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
 		controller.handleReservByUidGet(res, req)
-	} else if req.Method == `POST` {
+	} else if req.Method == `PATCH` {
 		controller.handleReservByUidPatch(res, req)
 	} else {
 		res.WriteHeader(http.StatusMethodNotAllowed)

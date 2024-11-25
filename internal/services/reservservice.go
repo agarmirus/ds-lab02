@@ -75,3 +75,7 @@ func (service *ReservationService) ReadReservByUid(reservUid string) (reservatio
 func (service *ReservationService) UpdateReservByUid(reservation *models.Reservation) (updatedReservation models.Reservation, err error) {
 	return service.reservsDAO.Update(reservation)
 }
+
+func (service *ReservationService) CreateReserv(reservation *models.Reservation) (newReservation models.Reservation, err error) {
+	return service.reservsDAO.Create(reservation)
+}

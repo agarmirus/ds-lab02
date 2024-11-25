@@ -13,4 +13,5 @@ type IReservationService interface {
 	ReadReservsByUsername(string) (list.List, error)
 	ReadReservByUid(string) (models.Reservation, error)
 	UpdateReservByUid(*models.Reservation) (models.Reservation, error)
+	CreateReserv(*models.Reservation) (models.Reservation, error)
 }

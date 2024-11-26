@@ -69,8 +69,32 @@ func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string)
 	return resLst, nil
 }
 
-func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (models.Loyalty, error) {
-	return models.Loyalty{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty models.Loyalty, err error) {
+	db, err := sql.Open(`postgres`, dao.connStr)
+
+	if err != nil {
+		return updatedLoyalty, errors.New(serverrors.ErrDatabaseConnection)
+	}
+
+	row := db.QueryRow(
+		`update loyalty
+		set username = '$1', reservation_count = '$2', status = '$3', discount = '$4'
+		where id = $5
+		returning *`,
+		loyalty.Username, loyalty.ReservationCount, loyalty.Status, loyalty.Discount,
+		loyalty.Id,
+	)
+	err = row.Scan(&updatedLoyalty)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = errors.New(serverrors.ErrEntityNotFound)
+		} else {
+			err = errors.New(serverrors.ErrQueryResRead)
+		}
+	}
+
+	return updatedLoyalty, err
 }
 
 func (dao *PostgresLoyaltyDAO) Delete(loyalty *models.Loyalty) error {

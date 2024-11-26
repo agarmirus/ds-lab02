@@ -703,7 +703,7 @@ func (service *GatewayService) CreateReservation(
 		return crReservRes, err
 	}
 
-	models.ReservToCrReservRes(&crReservRes, &reservation, &payment, &loyalty)
+	models.ReservToCrReservRes(&crReservRes, &reservation, &payment, &loyalty, hotel.Uid)
 
 	return crReservRes, nil
 }

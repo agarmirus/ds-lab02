@@ -155,13 +155,22 @@ func HotelsSliceToPagRes(
 	}
 }
 
-func ReservsSliceToUserInfoRes(
-	userInfoRes *UserInfoResponse,
-	userReservsSlice []Reservation,
-	hotelsMap map[int]Hotel,
-	paymentsMap map[string]Payment,
-	loyalty *Loyalty,
+func hotelToHotelInfo(
+	hotelInfo *HotelInfo,
+	hotel *Hotel,
 ) {
+	hotelInfo.HotelUid = hotel.Uid
+	hotelInfo.Name = hotel.Name
+	hotelInfo.FullAddress = hotel.Country + `, ` + hotel.City + `, ` + hotel.Address
+	hotelInfo.Stars = hotel.Stars
+}
+
+func paymentToPaymentInfo(
+	paymentInfo *PaymentInfo,
+	payment *Payment,
+) {
+	paymentInfo.Status = payment.Status
+	paymentInfo.Price = payment.Price
 }
 
 func ReservToReservRes(
@@ -170,6 +179,13 @@ func ReservToReservRes(
 	hotel *Hotel,
 	payment *Payment,
 ) {
+	reservRes.ReservationUid = reservation.Uid
+	reservRes.StartDate = reservation.StartDate.Format(`%F`)
+	reservRes.EndDate = reservation.EndDate.Format(`%F`)
+	reservRes.Status = reservation.Status
+
+	hotelToHotelInfo(&reservRes.Hotel, hotel)
+	paymentToPaymentInfo(&reservRes.Payment, payment)
 }
 
 func ReservsSliceToReservRes(
@@ -178,6 +194,37 @@ func ReservsSliceToReservRes(
 	hotelsMap map[int]Hotel,
 	paymentsMap map[string]Payment,
 ) {
+	totalElements := len(userReservsSlice)
+
+	for i := 0; i < totalElements; i++ {
+		var reservRes ReservationResponse
+		hotel := hotelsMap[userReservsSlice[i].HotelId]
+		payment := paymentsMap[userReservsSlice[i].Uid]
+
+		ReservToReservRes(&reservRes, &userReservsSlice[i], &hotel, &payment)
+
+		reservsResSlice = append(reservsResSlice, reservRes)
+	}
+}
+
+func LoyaltyToLoyaltyInfoRes(
+	loyatlyInfoRes *LoyaltyInfoResponse,
+	loyalty *Loyalty,
+) {
+	loyatlyInfoRes.Status = loyalty.Status
+	loyatlyInfoRes.Discount = loyalty.Discount
+	loyatlyInfoRes.ReservationCount = loyalty.ReservationCount
+}
+
+func ReservsSliceToUserInfoRes(
+	userInfoRes *UserInfoResponse,
+	userReservsSlice []Reservation,
+	hotelsMap map[int]Hotel,
+	paymentsMap map[string]Payment,
+	loyalty *Loyalty,
+) {
+	ReservsSliceToReservRes(userInfoRes.Reservations, userReservsSlice, hotelsMap, paymentsMap)
+	LoyaltyToLoyaltyInfoRes(&userInfoRes.Loyalty, loyalty)
 }
 
 func ReservToCrReservRes(
@@ -185,13 +232,16 @@ func ReservToCrReservRes(
 	reservation *Reservation,
 	payment *Payment,
 	loyalty *Loyalty,
+	hotelUid string,
 ) {
-}
+	crReservRes.ReservationUid = reservation.Uid
+	crReservRes.HotelUid = hotelUid
+	crReservRes.StartDate = reservation.StartDate.Format(`%F`)
+	crReservRes.EndDate = reservation.EndDate.Format(`%F`)
+	crReservRes.Discount = loyalty.Discount
+	crReservRes.Status = reservation.Status
 
-func LoyaltyToLoyaltyInfoRes(
-	loyatlyInfoRes *LoyaltyInfoResponse,
-	loyalty *Loyalty,
-) {
+	paymentToPaymentInfo(&crReservRes.Payment, payment)
 }
 
 func ValidateCrReservReq(

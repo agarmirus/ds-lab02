@@ -69,8 +69,32 @@ func (dao *PostgresPaymentDAO) GetByAttribute(attrName string, attrValue string)
 	return resLst, nil
 }
 
-func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (models.Payment, error) {
-	return models.Payment{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (updatedPayment models.Payment, err error) {
+	db, err := sql.Open(`postgres`, dao.connStr)
+
+	if err != nil {
+		return updatedPayment, errors.New(serverrors.ErrDatabaseConnection)
+	}
+
+	row := db.QueryRow(
+		`update payment
+		set status = '$1', price = $2
+		where updatedPayment = '$3'
+		returning *`,
+		payment.Status, payment.Price,
+		payment.Uid,
+	)
+	err = row.Scan(&updatedPayment)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = errors.New(serverrors.ErrEntityNotFound)
+		} else {
+			err = errors.New(serverrors.ErrQueryResRead)
+		}
+	}
+
+	return updatedPayment, err
 }
 
 func (dao *PostgresPaymentDAO) Delete(payment *models.Payment) error {

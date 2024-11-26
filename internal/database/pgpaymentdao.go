@@ -79,7 +79,7 @@ func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (updatedPayment m
 	row := db.QueryRow(
 		`update payment
 		set status = '$1', price = $2
-		where updatedPayment = '$3'
+		where payment_uid = '$3'
 		returning *`,
 		payment.Status, payment.Price,
 		payment.Uid,

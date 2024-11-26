@@ -120,8 +120,33 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 	return resLst, nil
 }
 
-func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (models.Reservation, error) {
-	return models.Reservation{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (updatedReservation models.Reservation, err error) {
+	db, err := sql.Open(`postgres`, dao.connStr)
+
+	if err != nil {
+		return updatedReservation, errors.New(serverrors.ErrDatabaseConnection)
+	}
+
+	row := db.QueryRow(
+		`update reservation
+		set username = '$1', payment_uid = '$2', hotel_id = $3, status = '$4', start_date = '$5', end_date = '$6'
+		where reservation_uid = '$7'
+		returning *`,
+		reservation.Username, reservation.PaymentUid, reservation.HotelId,
+		reservation.Status, reservation.StartDate.Format(`%F`), reservation.EndDate.Format(`%F`),
+		reservation.Uid,
+	)
+	err = row.Scan(&updatedReservation)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = errors.New(serverrors.ErrEntityNotFound)
+		} else {
+			err = errors.New(serverrors.ErrQueryResRead)
+		}
+	}
+
+	return updatedReservation, err
 }
 
 func (dao *PostgresReservationDAO) Delete(reservation *models.Reservation) error {

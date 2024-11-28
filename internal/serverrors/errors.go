@@ -1,5 +1,10 @@
 package serverrors
 
+// Startup errors
+const ErrConfigRead string = `error while reading config file`
+const ErrServiceBuild string = `error while building service`
+const ErrControllerPrepare string = `error while preparing controller`
+
 // Implementation errors
 const ErrMethodIsNotImplemented string = `method is not implemented`
 

@@ -1,4 +1,5 @@
 {
     "host": "localhost",
-    "port": 8070
+    "port": 8050,
+    "connDb": ""
 }

@@ -289,12 +289,22 @@ func (controller *GatewayController) handleLoyaltyRequest(res http.ResponseWrite
 	}
 }
 
+func (controller *GatewayController) handleHealthRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func (controller *GatewayController) Prepare() error {
 	http.HandleFunc(`/api/v1/hotels`, controller.handleHotelsRequest)
 	http.HandleFunc(`/api/v1/me`, controller.handleUserRequest)
 	http.HandleFunc(`/api/v1/reservations`, controller.handleReservationsRequest)
 	http.HandleFunc(`/api/v1/reservations/{reservationUid}`, controller.handleSingleReservationRequest)
 	http.HandleFunc(`/api/v1/loyalty`, controller.handleLoyaltyRequest)
+
+	http.HandleFunc(`/manage/health`, controller.handleHealthRequest)
 
 	return nil
 }

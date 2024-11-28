@@ -149,9 +149,19 @@ func (controller *PaymentController) handlePaymentByUidRequest(res http.Response
 	}
 }
 
+func (controller *PaymentController) handleHealthRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func (controller *PaymentController) Prepare() error {
 	http.HandleFunc(`/api/v1/payment`, controller.handlePaymentRequest)
 	http.HandleFunc(`/api/v1/payment/{paymentUid}`, controller.handlePaymentByUidRequest)
+
+	http.HandleFunc(`/manage/health`, controller.handleHealthRequest)
 
 	return nil
 }

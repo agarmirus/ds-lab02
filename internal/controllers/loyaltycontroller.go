@@ -115,9 +115,19 @@ func (controller *LoyaltyController) handleLoyaltyByIdRequest(res http.ResponseW
 	}
 }
 
+func (controller *LoyaltyController) handleHealthRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func (controller *LoyaltyController) Prepare() error {
 	http.HandleFunc(`/api/v1/loyalty`, controller.handleLoyaltyRequest)
 	http.HandleFunc(`/api/v1/loyalty/{loyaltyId}`, controller.handleLoyaltyByIdRequest)
+
+	http.HandleFunc(`/manage/health`, controller.handleHealthRequest)
 
 	return nil
 }

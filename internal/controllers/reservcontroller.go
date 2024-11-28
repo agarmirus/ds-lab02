@@ -313,11 +313,21 @@ func (controller *ReservationController) handleReservWithUidRequest(res http.Res
 	}
 }
 
+func (controller *ReservationController) handleHealthRequest(res http.ResponseWriter, req *http.Request) {
+	if req.Method == `GET` {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func (controller *ReservationController) Prepare() error {
 	http.HandleFunc(`/api/v1/hotels`, controller.handleHotelsRequest)
 	http.HandleFunc(`/api/v1/hotels/{hotelUid}`, controller.handleHotelWithUidRequest)
 	http.HandleFunc(`/api/v1/reservations`, controller.handleReservsRequest)
 	http.HandleFunc(`/api/v1/reservations/{reservUid}`, controller.handleReservWithUidRequest)
+
+	http.HandleFunc(`/manage/health`, controller.handleHealthRequest)
 
 	return nil
 }

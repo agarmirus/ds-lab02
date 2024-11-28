@@ -11,7 +11,7 @@ import (
 	"github.com/agarmirus/ds-lab02/internal/services"
 )
 
-type configDataStruct struct {
+type gatewayConfigDataStruct struct {
 	Host        string `json:"host"`
 	LoayltyHost string `json:"loayltyHost"`
 	PaymentHost string `json:"paymentHost"`
@@ -22,7 +22,7 @@ type configDataStruct struct {
 	ReservPort  int    `json:"reservPort"`
 }
 
-func readConfig(path string, configData *configDataStruct) (err error) {
+func readConfig(path string, configData *gatewayConfigDataStruct) (err error) {
 	configFile, err := os.Open(path)
 
 	if err != nil {
@@ -40,7 +40,7 @@ func readConfig(path string, configData *configDataStruct) (err error) {
 	return json.Unmarshal(configJSON, configData)
 }
 
-func buildService(configData *configDataStruct) (controller controllers.IController, err error) {
+func buildService(configData *gatewayConfigDataStruct) (controller controllers.IController, err error) {
 	service := services.NewGatewayService(
 		configData.ReservHost,
 		configData.ReservPort,
@@ -60,7 +60,7 @@ func buildService(configData *configDataStruct) (controller controllers.IControl
 }
 
 func main() {
-	var configData configDataStruct
+	var configData gatewayConfigDataStruct
 	err := readConfig(`config/gateway.json`, &configData)
 
 	if err != nil {

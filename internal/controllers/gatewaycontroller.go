@@ -28,8 +28,8 @@ func NewGatewayController(
 }
 
 func (controller *GatewayController) handleAllHotelsGet(res http.ResponseWriter, req *http.Request) {
-	page, pageParseErr := strconv.Atoi(req.FormValue(`page`))
-	pageSize, pageSizeParseErr := strconv.Atoi(req.FormValue(`size`))
+	page, pageParseErr := strconv.Atoi(req.URL.Query().Get(`page`))
+	pageSize, pageSizeParseErr := strconv.Atoi(req.URL.Query().Get(`size`))
 
 	if pageParseErr != nil || pageSizeParseErr != nil || page <= 0 || pageSize <= 0 {
 		res.WriteHeader(http.StatusBadRequest)

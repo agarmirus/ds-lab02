@@ -47,7 +47,7 @@ func buildService(configData *reservConfigDataStruct) (controller controllers.IC
 
 func main() {
 	var configData reservConfigDataStruct
-	err := readConfig(`config/reservation.json`, &configData)
+	err := readConfig(`/configs/config.json`, &configData)
 
 	if err != nil {
 		panic(errors.New(serverrors.ErrConfigRead))

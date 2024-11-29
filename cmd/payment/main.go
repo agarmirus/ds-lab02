@@ -46,7 +46,7 @@ func buildService(configData *paymentConfigDataStruct) (controller controllers.I
 
 func main() {
 	var configData paymentConfigDataStruct
-	err := readConfig(`config/payment.json`, &configData)
+	err := readConfig(`/configs/config.json`, &configData)
 
 	if err != nil {
 		panic(errors.New(serverrors.ErrConfigRead))

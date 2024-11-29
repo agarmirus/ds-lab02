@@ -61,7 +61,7 @@ func buildService(configData *gatewayConfigDataStruct) (controller controllers.I
 
 func main() {
 	var configData gatewayConfigDataStruct
-	err := readConfig(`config/gateway.json`, &configData)
+	err := readConfig(`/configs/config.json`, &configData)
 
 	if err != nil {
 		panic(errors.New(serverrors.ErrConfigRead))

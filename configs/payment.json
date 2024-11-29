@@ -1,5 +1,5 @@
 {
     "host": "localhost",
     "port": 8060,
-    "connDb": ""
+    "connDb": "user=program password=test dbname=payments"
 }

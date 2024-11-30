@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,9 +30,12 @@ func NewLoyaltyController(
 }
 
 func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] LoyaltyController.handleLoyaltyByUsernameGet. Handling loyalty by username GET request")
+
 	username := req.Header.Get(`X-User-Name`)
 
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByUsernameGet. Invalid username: " + username)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -39,6 +43,7 @@ func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.Respons
 	loyalty, err := controller.service.ReadLoyaltyByUsername(username)
 
 	if err != nil {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByUsernameGet. service.ReadLoyaltyByUsername returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -51,7 +56,9 @@ func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.Respons
 	loyaltyJSON, err := json.Marshal(loyalty)
 
 	if err != nil {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByUsernameGet. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusOK)
@@ -60,9 +67,12 @@ func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.Respons
 }
 
 func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] LoyaltyController.handleLoyaltyByIdPatch. Handling loyalty by id PATCH request")
+
 	loyaltyId, err := strconv.Atoi(req.PathValue(`loyaltyId`))
 
 	if err != nil {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. Invalid loyalty id: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -71,6 +81,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 	n, err := req.Body.Read(reqBody)
 
 	if err != nil || n <= 0 {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -79,6 +90,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 	err = json.Unmarshal(reqBody, &loyalty)
 
 	if err != nil {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. Error while parsing JSON request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -87,6 +99,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 	_, err = controller.service.UpdateLoyaltyById(&loyalty)
 
 	if err != nil {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. service.UpdateLoyaltyById returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -101,24 +114,30 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 
 func (controller *LoyaltyController) handleLoyaltyRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
+		log.Println("[INFO] LoyaltyController.handleLoyaltyByIdRequest. Got loyalty by username GET request")
 		controller.handleLoyaltyByUsernameGet(res, req)
 	} else {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
 func (controller *LoyaltyController) handleLoyaltyByIdRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `PATCH` {
+		log.Println("[INFO] LoyaltyController.handleLoyaltyByIdRequest. Got loyalty by id PATCH request")
 		controller.handleLoyaltyByIdPatch(res, req)
 	} else {
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
 func (controller *LoyaltyController) handleHealthRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
+		log.Println("[INFO] LoyaltyController.handleHealthRequest. Got health GET request")
 		res.WriteHeader(http.StatusOK)
 	} else {
+		log.Println("[ERROR] LoyaltyController.handleHealthRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }

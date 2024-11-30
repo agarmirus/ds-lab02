@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"os"
 
 	"github.com/agarmirus/ds-lab02/internal/controllers"
@@ -46,24 +47,40 @@ func buildService(configData *reservConfigDataStruct) (controller controllers.IC
 }
 
 func main() {
-	var configData reservConfigDataStruct
-	err := readConfig(`/configs/config.json`, &configData)
+	log.Println("[INFO] Starting server...")
+
+	file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
+		log.Fatalln("[FATAL] Main. Failed to open log file: ", err)
+	}
+
+	defer file.Close()
+
+	log.SetOutput(file)
+
+	var configData reservConfigDataStruct
+	err = readConfig(`/configs/config.json`, &configData)
+
+	if err != nil {
+		log.Fatalln("[FATAL] Main. Failed to read config file: ", err)
 		panic(errors.New(serverrors.ErrConfigRead))
 	}
 
 	controller, err := buildService(&configData)
 
 	if err != nil {
+		log.Fatalln("[FATAL] Main. Failed to build service: ", err)
 		panic(errors.New(serverrors.ErrServiceBuild))
 	}
 
 	err = controller.Prepare()
 
 	if err != nil {
+		log.Fatalln("[FATAL] Main. Failed to prepare API: ", err)
 		panic(errors.New(serverrors.ErrControllerPrepare))
 	}
 
+	log.Println("[INFO] Running server...")
 	controller.Run()
 }

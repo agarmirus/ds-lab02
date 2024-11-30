@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,9 +30,12 @@ func NewReservationController(
 }
 
 func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleAllHotelsGet. Handling hotels GET request")
+
 	hotelsLst, err := controller.service.ReadAllHotels()
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleAllHotelsGet. service.ReadAllHotels returned error: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -47,7 +51,9 @@ func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWri
 	hotelsSliceJSON, err := json.Marshal(hotelsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleAllHotelsGet. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusOK)
@@ -56,9 +62,12 @@ func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWri
 }
 
 func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleHotelByIdGet. Handling hotel by id GET request")
+
 	hotelId, err := strconv.Atoi(req.Header.Get(`Hotel-Id`))
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleHotelByIdGet. Invalid hotel id")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -66,6 +75,7 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 	hotel, err := controller.service.ReadHotelById(hotelId)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleHotelByIdGet. service.ReadHotelById returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -78,7 +88,9 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 	hotelJSON, err := json.Marshal(hotel)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleHotelByIdGet. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusOK)
@@ -87,9 +99,12 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 }
 
 func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleHotelByUidGet. Handling hotel by uid GET request")
+
 	hotelUid := req.PathValue("hotelUid")
 
 	if strings.Trim(hotelUid, ` `) == `` {
+		log.Println("[ERROR] ReservationController.handleHotelByUidGet. Invalid username")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -97,6 +112,7 @@ func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWr
 	hotel, err := controller.service.ReadHotelByUid(hotelUid)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleHotelByUidGet. service.ReadHotelByUid returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -109,7 +125,9 @@ func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWr
 	hotelJSON, err := json.Marshal(hotel)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleHotelByUidGet. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusOK)
@@ -118,9 +136,12 @@ func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWr
 }
 
 func (controller *ReservationController) handleReservsByUsernameGet(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleReservsByUsernameGet. Handling reservations by username GET request")
+
 	username := req.Header.Get(`X-User-Name`)
 
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] ReservationController.handleReservsByUsernameGet. Invalid username: " + username)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -128,6 +149,7 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 	reservsLst, err := controller.service.ReadReservsByUsername(username)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservsByUsernameGet. service.ReadReservsByUsername returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -148,6 +170,7 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 	reservsSliceJSON, err := json.Marshal(reservsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservsByUsernameGet. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -158,9 +181,12 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 }
 
 func (controller *ReservationController) handleReservByUidGet(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleReservByUidGet. Handling reservation by uid GET request")
+
 	reservUid := req.PathValue(`reservUid`)
 
 	if strings.Trim(reservUid, ` `) == `` {
+		log.Println("[ERROR] ReservationController.handleReservByUidGet. Invalid reservation uid")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -168,6 +194,7 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 	reservation, err := controller.service.ReadReservByUid(reservUid)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservByUidGet. service.ReadReservByUid returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -180,7 +207,9 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 	reservJSON, err := json.Marshal(reservation)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservByUidGet. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusOK)
@@ -189,9 +218,12 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 }
 
 func (controller *ReservationController) handleReservByUidPatch(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleReservByUidPatch. Handling reservation by uid PATCH request")
+
 	reservUid := req.PathValue("reservUid")
 
 	if strings.Trim(reservUid, ` `) == `` {
+		log.Println("[ERROR] ReservationController.handleReservByUidPatch. Invalid reservation uid")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -200,6 +232,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	n, err := req.Body.Read(reqBody)
 
 	if err != nil || n <= 0 {
+		log.Println("[ERROR] ReservationController.handleReservByUidPatch. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -208,6 +241,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	err = json.Unmarshal(reqBody, &reservation)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservByUidPatch. Error while parsing JSON request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -216,6 +250,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	_, err = controller.service.UpdateReservByUid(&reservation)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservByUidPatch. service.UpdateReservByUid returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -229,10 +264,13 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 }
 
 func (controller *ReservationController) handleReservPost(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleReservPost. Handling reserfvation POST request")
+
 	var reqBody []byte
 	n, err := req.Body.Read(reqBody)
 
 	if err != nil || n <= 0 {
+		log.Println("[ERROR] ReservationController.handleReservPost. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -241,6 +279,7 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 	err = json.Unmarshal(reqBody, &reservation)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservPost. Error while parsing JSON request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -248,6 +287,7 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 	newReservation, err := controller.service.UpdateReservByUid(&reservation)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservPost. service.UpdateReservByUid returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -260,6 +300,7 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 	newReservationJSON, err := json.Marshal(&newReservation)
 
 	if err != nil {
+		log.Println("[ERROR] ReservationController.handleReservPost. Cannot convert result into JSON format: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -272,19 +313,24 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 func (controller *ReservationController) handleHotelsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
 		if strings.Trim(req.Header.Get(`Hotel-Id`), ` `) == `` {
+			log.Println("[INFO] ReservationController.handleHotelsRequest. Got hotels GET request")
 			controller.handleAllHotelsGet(res, req)
 		} else {
+			log.Println("[INFO] ReservationController.handleHotelsRequest. Got hotel by id GET request")
 			controller.handleHotelByIdGet(res, req)
 		}
 	} else {
+		log.Println("[ERROR] ReservationController.handleHotelsRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
 func (controller *ReservationController) handleHotelWithUidRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
+		log.Println("[INFO] ReservationController.handleHotelWithUidRequest. Got hotel with uid GET request")
 		controller.handleHotelByUidGet(res, req)
 	} else {
+		log.Println("[ERROR] ReservationController.handleHotelWithUidRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
@@ -292,31 +338,40 @@ func (controller *ReservationController) handleHotelWithUidRequest(res http.Resp
 func (controller *ReservationController) handleReservsRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
 		if strings.Trim(req.Header.Get(`X-User-Name`), ` `) != `` {
+			log.Println("[INFO] ReservationController.handleReservsRequest. Got reservation GET request")
 			controller.handleReservsByUsernameGet(res, req)
 		} else {
+			log.Println("[ERROR] PaymentController.handleReservsRequest. Invalid request")
 			res.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	} else if req.Method == `POST` {
+		log.Println("[INFO] ReservationController.handleReservsRequest. Got reservation POST request")
 		controller.handleReservPost(res, req)
 	} else {
+		log.Println("[ERROR] ReservationController.handleReservsRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
 func (controller *ReservationController) handleReservWithUidRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
+		log.Println("[INFO] ReservationController.handleReservWithUidRequest. Got reservation with uid GET request")
 		controller.handleReservByUidGet(res, req)
 	} else if req.Method == `PATCH` {
+		log.Println("[INFO] ReservationController.handleReservWithUidRequest. Got reservation with uid PATCH request")
 		controller.handleReservByUidPatch(res, req)
 	} else {
+		log.Println("[ERROR] ReservationController.handleReservWithUidRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
 func (controller *ReservationController) handleHealthRequest(res http.ResponseWriter, req *http.Request) {
 	if req.Method == `GET` {
+		log.Println("[INFO] ReservationController.handleHealthRequest. Got health GET request")
 		res.WriteHeader(http.StatusOK)
 	} else {
+		log.Println("[ERROR] ReservationController.handleHealthRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"database/sql"
 	"errors"
+	"log"
 
 	_ "github.com/jackc/pgx"
 
@@ -24,6 +25,7 @@ func (dao *PostgresHotelDAO) SetConnectionString(connStr string) {
 }
 
 func (dao *PostgresHotelDAO) Create(hotel *models.Hotel) (models.Hotel, error) {
+	log.Println("[ERROR] PostgresHotelDAO.Create. Method is not implemented")
 	return models.Hotel{}, errors.New(serverrors.ErrMethodIsNotImplemented)
 }
 
@@ -31,12 +33,14 @@ func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
 	db, err := sql.Open(`postgres`, dao.connStr)
 
 	if err != nil {
+		log.Println("[ERROR] PostgresHotelDAO.Get. Cannot connect to database:", err)
 		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
 	rows, err := db.Query(`select * from hotels;`)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("[ERROR] PostgresHotelDAO.Get. Error while executing query:", err)
 		return resLst, errors.New(serverrors.ErrQueryResRead)
 	}
 
@@ -45,6 +49,7 @@ func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
 		err = rows.Scan(&hotel)
 
 		if err != nil {
+			log.Println("[ERROR] PostgresHotelDAO.Get. Error while reading query result:", err)
 			return list.List{}, errors.New(serverrors.ErrQueryResRead)
 		}
 
@@ -56,12 +61,14 @@ func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
 
 func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel, err error) {
 	if hotel.Id <= 0 {
+		log.Println("[ERROR] PostgresHotelDAO.GetById. Invalid ID")
 		return resHotel, errors.New(serverrors.ErrInvalidHotelId)
 	}
 
 	db, err := sql.Open(`postgres`, dao.connStr)
 
 	if err != nil {
+		log.Println("[ERROR] PostgresHotelDAO.GetById. Cannot connect to database:", err)
 		return resHotel, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
@@ -73,8 +80,10 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Println("[ERROR] PostgresHotelDAO.GetById. Entity not found")
 			err = errors.New(serverrors.ErrEntityNotFound)
 		} else {
+			log.Println("[ERROR] PostgresHotelDAO.GetById. Error while reading query result:", err)
 			err = errors.New(serverrors.ErrQueryResRead)
 		}
 	}
@@ -86,16 +95,18 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 	db, err := sql.Open(`postgres`, dao.connStr)
 
 	if err != nil {
+		log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Cannot connect to database:", err)
 		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
 	rows, err := db.Query(
-		`select * from hotels where $1 = '$2';`,
+		`select * from hotels where $1 = $2;`,
 		attrName, attrValue,
 	)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
+			log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Error while executing query:", err)
 			return resLst, errors.New(serverrors.ErrQueryResRead)
 		}
 
@@ -107,6 +118,7 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 		err = rows.Scan(&hotel)
 
 		if err != nil {
+			log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Error while reading query result:", err)
 			return list.List{}, errors.New(serverrors.ErrQueryResRead)
 		}
 
@@ -117,13 +129,16 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 }
 
 func (dao *PostgresHotelDAO) Update(hotel *models.Hotel) (models.Hotel, error) {
+	log.Println("[ERROR] PostgresHotelDAO.Update. Method is not implemented")
 	return models.Hotel{}, errors.New(serverrors.ErrMethodIsNotImplemented)
 }
 
 func (dao *PostgresHotelDAO) Delete(hotel *models.Hotel) error {
+	log.Println("[ERROR] PostgresHotelDAO.Delete. Method is not implemented")
 	return errors.New(serverrors.ErrMethodIsNotImplemented)
 }
 
 func (dao *PostgresHotelDAO) DeleteByAttr(attrName string, attrValue string) error {
+	log.Println("[ERROR] PostgresHotelDAO.DeleteByAttr. Method is not implemented")
 	return errors.New(serverrors.ErrMethodIsNotImplemented)
 }

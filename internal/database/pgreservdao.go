@@ -88,6 +88,14 @@ func (dao *PostgresReservationDAO) Get() (list.List, error) {
 	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
 }
 
+func (dao *PostgresReservationDAO) GetPaginated(
+	page int,
+	pageSize int,
+) (resLst list.List, err error) {
+	log.Println("[ERROR] PostgresLoyaltyDAO.GetPaginated. Method is not implemented")
+	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+}
+
 func (dao *PostgresReservationDAO) GetById(reservation *models.Reservation) (models.Reservation, error) {
 	log.Println("[ERROR] PostgresReservationDAO.GetById. Method is not implemented")
 	return models.Reservation{}, errors.New(serverrors.ErrMethodIsNotImplemented)

@@ -7,7 +7,7 @@ import (
 )
 
 type IReservationService interface {
-	ReadAllHotels() (list.List, error)
+	ReadPaginatedHotels(int, int) (list.List, error)
 	ReadHotelById(int) (models.Hotel, error)
 	ReadHotelByUid(string) (models.Hotel, error)
 	ReadReservsByUsername(string) (list.List, error)

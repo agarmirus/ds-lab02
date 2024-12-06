@@ -34,6 +34,14 @@ func (dao *PostgresPaymentDAO) Get() (list.List, error) {
 	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
 }
 
+func (dao *PostgresPaymentDAO) GetPaginated(
+	page int,
+	pageSize int,
+) (resLst list.List, err error) {
+	log.Println("[ERROR] PostgresLoyaltyDAO.GetPaginated. Method is not implemented")
+	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+}
+
 func (dao *PostgresPaymentDAO) GetById(payment *models.Payment) (models.Payment, error) {
 	log.Println("[ERROR] PostgresPaymentDAO.GetById. Method is not implemented")
 	return models.Payment{}, errors.New(serverrors.ErrMethodIsNotImplemented)

@@ -32,10 +32,19 @@ func NewReservationController(
 func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWriter, req *http.Request) {
 	log.Println("[INFO] ReservationController.handleAllHotelsGet. Handling hotels GET request")
 
-	hotelsLst, err := controller.service.ReadAllHotels()
+	page, pageParseErr := strconv.Atoi(req.FormValue(`page`))
+	pageSize, pageSizeParseErr := strconv.Atoi(req.FormValue(`size`))
+
+	if pageParseErr != nil || pageSizeParseErr != nil || page <= 0 || pageSize <= 0 {
+		log.Println("[ERROR] ReservationController.handleAllHotelsGet. Invalid URL parameters")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	hotelsLst, err := controller.service.ReadPaginatedHotels(page, pageSize)
 
 	if err != nil {
-		log.Println("[ERROR] ReservationController.handleAllHotelsGet. service.ReadAllHotels returned error: ", err)
+		log.Println("[ERROR] ReservationController.handleAllHotelsGet. service.ReadPaginatedHotels returned error: ", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

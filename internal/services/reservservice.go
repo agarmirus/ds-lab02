@@ -22,11 +22,19 @@ func NewReservationService(
 	return &ReservationService{reservsDAO, hotelsDAO}
 }
 
-func (service *ReservationService) ReadAllHotels() (hotelsLst list.List, err error) {
-	hotelsLst, err = service.hotelsDAO.Get()
+func (service *ReservationService) ReadPaginatedHotels(
+	page int,
+	pageSize int,
+) (hotelsLst list.List, err error) {
+	if page <= 0 || pageSize <= 0 {
+		log.Println("[ERROR] ReservationService.ReadPaginatedHotels. Invalid page and pageSize values")
+		return hotelsLst, errors.New(serverrors.ErrInvalidPagesData)
+	}
+
+	hotelsLst, err = service.hotelsDAO.GetPaginated(page, pageSize)
 
 	if err != nil {
-		log.Println("[ERROR] ReservationService.ReadAllHotels. hotelsDAO.GetById returned error:", err)
+		log.Println("[ERROR] ReservationService.ReadPaginatedHotels. hotelsDAO.GetPaginated returned error:", err)
 	}
 
 	return hotelsLst, err

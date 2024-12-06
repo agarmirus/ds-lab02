@@ -30,17 +30,34 @@ func (dao *PostgresHotelDAO) Create(hotel *models.Hotel) (models.Hotel, error) {
 }
 
 func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
+	log.Println("[ERROR] PostgresHotelDAO.Get. Method is not implemented")
+	return resLst, errors.New(serverrors.ErrMethodIsNotImplemented)
+}
+
+func (dao *PostgresHotelDAO) GetPaginated(
+	page int,
+	pageSize int,
+) (resLst list.List, err error) {
+	if page <= 0 || pageSize <= 0 {
+		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Invalid pages data")
+		return resLst, errors.New(serverrors.ErrInvalidPagesData)
+	}
+
 	db, err := sql.Open(`postgres`, dao.connStr)
 
 	if err != nil {
-		log.Println("[ERROR] PostgresHotelDAO.Get. Cannot connect to database:", err)
+		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Cannot connect to database:", err)
 		return resLst, errors.New(serverrors.ErrDatabaseConnection)
 	}
 
-	rows, err := db.Query(`select * from hotels;`)
+	rows, err := db.Query(
+		`select * from hotels order by id limit $1 offset $2;`,
+		pageSize,
+		page*pageSize,
+	)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("[ERROR] PostgresHotelDAO.Get. Error while executing query:", err)
+		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Error while executing query:", err)
 		return resLst, errors.New(serverrors.ErrQueryResRead)
 	}
 
@@ -49,7 +66,7 @@ func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
 		err = rows.Scan(&hotel)
 
 		if err != nil {
-			log.Println("[ERROR] PostgresHotelDAO.Get. Error while reading query result:", err)
+			log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Error while reading query result:", err)
 			return list.List{}, errors.New(serverrors.ErrQueryResRead)
 		}
 

@@ -8,6 +8,7 @@ type IDAO[T any] interface {
 	Create(*T) (T, error)
 
 	Get() (list.List, error)
+	GetPaginated(int, int) (list.List, error)
 	GetById(*T) (T, error)
 	GetByAttribute(string, string) (list.List, error)
 

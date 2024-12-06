@@ -48,13 +48,18 @@ func NewGatewayService(
 	}
 }
 
-func (service *GatewayService) performAllHotelsGetRequest() (hotelsSlice []models.Hotel, err error) {
+func (service *GatewayService) performAllHotelsGetRequest(
+	page int,
+	pageSize int,
+) (hotelsSlice []models.Hotel, err error) {
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf(
-			"http://%s:%d/api/v1/hotels",
+			"http://%s:%d/api/v1/hotels?page=%d&size=%d",
 			service.reservServiceHost,
 			service.reservServicePort,
+			page,
+			pageSize,
 		),
 		nil,
 	)
@@ -617,7 +622,7 @@ func (service *GatewayService) ReadAllHotels(
 		return pagRes, errors.New(serverrors.ErrInvalidPagesData)
 	}
 
-	hotelsSlice, err := service.performAllHotelsGetRequest()
+	hotelsSlice, err := service.performAllHotelsGetRequest(page, pageSize)
 
 	if err != nil {
 		log.Println("[ERROR] GatewayService.ReadAllHotels. performAllHotelsGetRequest returned error:", err)

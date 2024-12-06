@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -59,12 +60,14 @@ func (service *GatewayService) performAllHotelsGetRequest() (hotelsSlice []model
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performAllHotelsGetRequest. Error while creating new HTTP-request: ", err)
 		return hotelsSlice, errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performAllHotelsGetRequest. Error while sending request")
 		return hotelsSlice, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -72,12 +75,14 @@ func (service *GatewayService) performAllHotelsGetRequest() (hotelsSlice []model
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performAllHotelsGetRequest. Error while reading response")
 		return hotelsSlice, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &hotelsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performAllHotelsGetRequest. Error while parsing JSON response body")
 		return hotelsSlice, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -98,6 +103,7 @@ func (service *GatewayService) performUserReservsGetRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performUserReservsGetRequest. Error while creating new request")
 		return userReservsSlice, errors.New(serverrors.ErrNewRequestForming)
 	}
 
@@ -105,6 +111,7 @@ func (service *GatewayService) performUserReservsGetRequest(
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performUserReservsGetRequest. Error while sending request")
 		return userReservsSlice, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -112,12 +119,14 @@ func (service *GatewayService) performUserReservsGetRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performUserReservsGetRequest. Error while reading response")
 		return userReservsSlice, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &userReservsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performUserReservsGetRequest. Error while parsing JSON response body")
 		return userReservsSlice, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -138,6 +147,7 @@ func (service *GatewayService) performHotelByIdGetRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByIdGetRequest. Error while creating new request")
 		return hotel, errors.New(serverrors.ErrNewRequestForming)
 	}
 
@@ -145,6 +155,7 @@ func (service *GatewayService) performHotelByIdGetRequest(
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByIdGetRequest. Error while sending request")
 		return hotel, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -152,12 +163,14 @@ func (service *GatewayService) performHotelByIdGetRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByIdGetRequest. Error while reading response")
 		return hotel, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &hotel)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByIdGetRequest. Error while parsing JSON response body")
 		return hotel, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -174,6 +187,7 @@ func (service *GatewayService) performReservsHotelsGetRequest(
 		hotel, err := service.performHotelByIdGetRequest(userReservsSlice[i].HotelId)
 
 		if err != nil {
+			log.Println("[ERROR] GatewayService.performReservsHotelsGetRequest. performHotelByIdGetRequest returned error:", err)
 			return hotelsMap, err
 		}
 
@@ -198,12 +212,14 @@ func (service *GatewayService) performPaymentByUidGetRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentByUidGetRequest. Error while creating new request")
 		return payment, errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentByUidGetRequest. Error while sending request")
 		return payment, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -211,12 +227,14 @@ func (service *GatewayService) performPaymentByUidGetRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentByUidGetRequest. Error while reading response")
 		return payment, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &payment)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentByUidGetRequest. Error while parsing JSON response body")
 		return payment, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -233,6 +251,7 @@ func (service *GatewayService) performReservsPaymentsGetRequest(
 		payment, err := service.performPaymentByUidGetRequest(userReservsSlice[i].PaymentUid)
 
 		if err != nil {
+			log.Println("[ERROR] GatewayService.performReservsPaymentsGetRequest. performPaymentByUidGetRequest returned error:", err)
 			return paymentsMap, err
 		}
 
@@ -257,12 +276,14 @@ func (service *GatewayService) performHotelByUidGetRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByUidGetRequest. Error while creating new request")
 		return hotel, errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByUidGetRequest. Error while sending request")
 		return hotel, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -270,12 +291,14 @@ func (service *GatewayService) performHotelByUidGetRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByUidGetRequest. Error while reading response")
 		return hotel, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &hotel)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performHotelByUidGetRequest. Error while parsing JSON response body")
 		return hotel, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -296,6 +319,7 @@ func (service *GatewayService) performPaymentPostRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPostRequest. Error while creating new request")
 		return payment, errors.New(serverrors.ErrNewRequestForming)
 	}
 
@@ -303,6 +327,7 @@ func (service *GatewayService) performPaymentPostRequest(
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPostRequest. Error while sending request")
 		return payment, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -310,12 +335,14 @@ func (service *GatewayService) performPaymentPostRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPostRequest. Error while reading response")
 		return payment, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &payment)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPostRequest. Error while parsing JSON response body")
 		return payment, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -328,6 +355,7 @@ func (service *GatewayService) performLoyaltyPatchRequest(
 	loyaltyJSON, err := json.Marshal(loyalty)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyPatchRequest. Cannot create JSON object for request body")
 		return errors.New(serverrors.ErrJSONParse)
 	}
 
@@ -343,12 +371,14 @@ func (service *GatewayService) performLoyaltyPatchRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyPatchRequest. Error while creating new request")
 		return errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyPatchRequest. Error while sending request")
 		return errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -374,6 +404,7 @@ func (service *GatewayService) performReservationPostRequest(
 	newReservJSON, err := json.Marshal(newReservation)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservationPostRequest. Cannot create JSON object for request body")
 		return reservation, errors.New(serverrors.ErrJSONParse)
 	}
 
@@ -388,12 +419,14 @@ func (service *GatewayService) performReservationPostRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservationPostRequest. Error while creating new request")
 		return reservation, errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservationPostRequest. Error while sending request")
 		return reservation, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -401,12 +434,14 @@ func (service *GatewayService) performReservationPostRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservationPostRequest. Error while reading response")
 		return reservation, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &reservation)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservationPostRequest. Error while parsing JSON response body")
 		return reservation, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -428,12 +463,14 @@ func (service *GatewayService) performReservGetRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservGetRequest. Error while creating new request")
 		return reserv, errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservGetRequest. Error while sending request")
 		return reserv, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -441,12 +478,14 @@ func (service *GatewayService) performReservGetRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservGetRequest. Error while reading response")
 		return reserv, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &reserv)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservGetRequest. Error while parsing JSON response body")
 		return reserv, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -467,6 +506,7 @@ func (service *GatewayService) performLoyaltyByUsernameGetRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyByUsernameGetRequest. Error while creating new request")
 		return loyalty, errors.New(serverrors.ErrNewRequestForming)
 	}
 
@@ -474,6 +514,7 @@ func (service *GatewayService) performLoyaltyByUsernameGetRequest(
 	res, err := (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyByUsernameGetRequest. Error while sending request")
 		return loyalty, errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -481,12 +522,14 @@ func (service *GatewayService) performLoyaltyByUsernameGetRequest(
 	_, err = res.Body.Read(resBody)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyByUsernameGetRequest. Error while reading response")
 		return loyalty, errors.New(serverrors.ErrResponseRead)
 	}
 
 	err = json.Unmarshal(resBody, &loyalty)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performLoyaltyByUsernameGetRequest. Error while parsing JSON response body")
 		return loyalty, errors.New(serverrors.ErrResponseParse)
 	}
 
@@ -499,6 +542,7 @@ func (service *GatewayService) performReservPatchRequest(
 	reservJSON, err := json.Marshal(reservation)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservPatchRequest. Cannot create JSON object for request body")
 		return errors.New(serverrors.ErrJSONParse)
 	}
 
@@ -514,12 +558,14 @@ func (service *GatewayService) performReservPatchRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservPatchRequest. Error while creating new request")
 		return errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performReservPatchRequest. Error while sending request")
 		return errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -532,6 +578,7 @@ func (service *GatewayService) performPaymentPatchRequest(
 	paymentJSON, err := json.Marshal(payment)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPatchRequest. Cannot create JSON object for request body")
 		return errors.New(serverrors.ErrJSONParse)
 	}
 
@@ -547,12 +594,14 @@ func (service *GatewayService) performPaymentPatchRequest(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPatchRequest. Error while creating new request")
 		return errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.performPaymentPatchRequest. Error while sending request")
 		return errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -564,12 +613,14 @@ func (service *GatewayService) ReadAllHotels(
 	pageSize int,
 ) (pagRes models.PagiationResponse, err error) {
 	if page <= 0 || pageSize <= 0 {
+		log.Println("[ERROR] GatewayService.ReadAllHotels. Invalid parameters")
 		return pagRes, errors.New(serverrors.ErrInvalidPagesData)
 	}
 
 	hotelsSlice, err := service.performAllHotelsGetRequest()
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadAllHotels. performAllHotelsGetRequest returned error:", err)
 		return pagRes, err
 	}
 
@@ -582,30 +633,35 @@ func (service *GatewayService) ReadUserInfo(
 	username string,
 ) (userInfoRes models.UserInfoResponse, err error) {
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] GatewayService.ReadUserInfo. Invalid username")
 		return userInfoRes, errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	userReservsSlice, err := service.performUserReservsGetRequest(username)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserInfo. performUserReservsGetRequest returned error:", err)
 		return userInfoRes, err
 	}
 
 	hotelsMap, err := service.performReservsHotelsGetRequest(userReservsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserInfo. performReservsHotelsGetRequest returned error:", err)
 		return userInfoRes, err
 	}
 
 	paymentsMap, err := service.performReservsPaymentsGetRequest(userReservsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserInfo. performReservsPaymentsGetRequest returned error:", err)
 		return userInfoRes, err
 	}
 
 	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil && !errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		log.Println("[ERROR] GatewayService.ReadUserInfo. performLoyaltyByUsernameGetRequest returned error:", err)
 		return userInfoRes, err
 	}
 
@@ -618,24 +674,28 @@ func (service *GatewayService) ReadUserReservations(
 	username string,
 ) (reservsResSlice []models.ReservationResponse, err error) {
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] GatewayService.ReadUserReservations. Invalid username")
 		return reservsResSlice, errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	userReservsSlice, err := service.performUserReservsGetRequest(username)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserReservations. performUserReservsGetRequest returned error:", err)
 		return reservsResSlice, err
 	}
 
 	hotelsMap, err := service.performReservsHotelsGetRequest(userReservsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserReservations. performReservsHotelsGetRequest returned error:", err)
 		return reservsResSlice, err
 	}
 
 	paymentsMap, err := service.performReservsPaymentsGetRequest(userReservsSlice)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserReservations. performReservsPaymentsGetRequest returned error:", err)
 		return reservsResSlice, err
 	}
 
@@ -649,24 +709,28 @@ func (service *GatewayService) CreateReservation(
 	crReservReq *models.CreateReservationRequest,
 ) (crReservRes models.CreateReservationResponse, err error) {
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] GatewayService.CreateReservation. Invalid username")
 		return crReservRes, errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	_, err = models.ValidateCrReservReq(crReservReq)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.CreateReservation. Invalid create reservation request")
 		return crReservRes, errors.New(serverrors.ErrInvalidCrReservReq)
 	}
 
 	hotel, err := service.performHotelByUidGetRequest(crReservReq.HotelUid)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.CreateReservation. performHotelByUidGetRequest returned error:", err)
 		return crReservRes, err
 	}
 
 	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil && !errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		log.Println("[ERROR] GatewayService.CreateReservation. performLoyaltyByUsernameGetRequest returned error:", err)
 		return crReservRes, err
 	}
 
@@ -676,12 +740,13 @@ func (service *GatewayService) CreateReservation(
 	price := nightsCount * hotel.Price
 
 	if loyalty.Discount > 0 {
-		price = int(math.Round(float64(price) * float64(loyalty.Discount/100.0)))
+		price = int(math.Round(float64(price) * float64(1.0-loyalty.Discount/100.0)))
 	}
 
 	payment, err := service.performPaymentPostRequest(price)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.CreateReservation. performPaymentPostRequest returned error:", err)
 		return crReservRes, err
 	}
 
@@ -692,6 +757,7 @@ func (service *GatewayService) CreateReservation(
 	)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.CreateReservation. performReservationPostRequest returned error:", err)
 		return crReservRes, err
 	}
 
@@ -700,6 +766,7 @@ func (service *GatewayService) CreateReservation(
 	err = service.performLoyaltyPatchRequest(&loyalty)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.CreateReservation. performLoyaltyPatchRequest returned error:", err)
 		return crReservRes, err
 	}
 
@@ -713,32 +780,38 @@ func (service *GatewayService) ReadReservation(
 	username string,
 ) (reservRes models.ReservationResponse, err error) {
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] GatewayService.ReadReservation. Invalid username")
 		return reservRes, errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	if uuid.Validate(reservUid) != nil {
+		log.Println("[ERROR] GatewayService.ReadReservation. Invalid reservation uid")
 		return reservRes, errors.New(serverrors.ErrInvalidReservUid)
 	}
 
 	reservation, err := service.performReservGetRequest(reservUid)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadReservation. performReservGetRequest returned error:", err)
 		return reservRes, err
 	}
 
 	if reservation.Username != username {
+		log.Println("[ERROR] GatewayService.ReadReservation. Invalid username")
 		return reservRes, errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	hotel, err := service.performHotelByIdGetRequest(reservation.HotelId)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadReservation. performHotelByIdGetRequest returned error:", err)
 		return reservRes, err
 	}
 
 	payment, err := service.performPaymentByUidGetRequest(reservation.PaymentUid)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadReservation. performPaymentByUidGetRequest returned error:", err)
 		return reservRes, err
 	}
 
@@ -752,16 +825,19 @@ func (service *GatewayService) DeleteReservation(
 	username string,
 ) error {
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Invalid username")
 		return errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	if uuid.Validate(reservUid) != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Invalid reservation uid")
 		return errors.New(serverrors.ErrInvalidReservUid)
 	}
 
 	reservation, err := service.performReservGetRequest(reservUid)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while getting reservation by uid: ", err)
 		return err
 	}
 
@@ -769,12 +845,14 @@ func (service *GatewayService) DeleteReservation(
 	err = service.performReservPatchRequest(&reservation)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while patching reservation: ", err)
 		return err
 	}
 
 	payment, err := service.performPaymentByUidGetRequest(reservation.PaymentUid)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while getting payment by uid: ", err)
 		return err
 	}
 
@@ -782,30 +860,40 @@ func (service *GatewayService) DeleteReservation(
 	err = service.performPaymentPatchRequest(&payment)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while patching payment: ", err)
 		return err
 	}
 
 	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while getting loyalty by username: ", err)
 		return err
 	}
 
 	loyalty.ReservationCount--
 
-	return service.performLoyaltyPatchRequest(&loyalty)
+	err = service.performLoyaltyPatchRequest(&loyalty)
+
+	if err != nil {
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while patching loyalty: ", err)
+	}
+
+	return err
 }
 
 func (service *GatewayService) ReadUserLoyalty(
 	username string,
 ) (loyaltyInfoRes models.LoyaltyInfoResponse, err error) {
 	if strings.Trim(username, ` `) == `` {
+		log.Println("[ERROR] GatewayService.ReadUserLoyalty. Invalid username")
 		return loyaltyInfoRes, errors.New(serverrors.ErrInvalidUsername)
 	}
 
 	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
 	if err != nil {
+		log.Println("[ERROR] GatewayService.ReadUserLoyalty. error while getting loyalty by username: ", err)
 		return loyaltyInfoRes, err
 	}
 

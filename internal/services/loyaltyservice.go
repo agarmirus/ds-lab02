@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 
 	"github.com/agarmirus/ds-lab02/internal/database"
 	"github.com/agarmirus/ds-lab02/internal/models"
@@ -22,10 +23,12 @@ func (service *LoyaltyService) ReadLoyaltyByUsername(username string) (loyalty m
 	loyaltiesLst, err := service.loyaltyDAO.GetByAttribute(`username`, username)
 
 	if err != nil {
+		log.Println("[ERROR] LoyaltyService.ReadLoyaltyByUsername. loyaltyDAO.GetByAttribute returned error:", err)
 		return loyalty, err
 	}
 
 	if loyaltiesLst.Len() == 0 {
+		log.Println("[ERROR] LoyaltyService.ReadLoyaltyByUsername. Entity not found")
 		return loyalty, errors.New(serverrors.ErrEntityNotFound)
 	}
 
@@ -33,5 +36,11 @@ func (service *LoyaltyService) ReadLoyaltyByUsername(username string) (loyalty m
 }
 
 func (service *LoyaltyService) UpdateLoyaltyById(loyalty *models.Loyalty) (updatedLoyalty models.Loyalty, err error) {
-	return service.loyaltyDAO.Update(loyalty)
+	updatedLoyalty, err = service.loyaltyDAO.Update(loyalty)
+
+	if err != nil {
+		log.Println("[ERROR] LoyaltyService.UpdateLoyaltyById. loyaltyDAO.Update returned error:", err)
+	}
+
+	return updatedLoyalty, err
 }

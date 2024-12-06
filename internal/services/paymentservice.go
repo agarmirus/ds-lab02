@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 
 	"github.com/agarmirus/ds-lab02/internal/database"
 	"github.com/agarmirus/ds-lab02/internal/models"
@@ -22,10 +23,12 @@ func (service *PaymentService) ReadPaymentByUid(paymentUid string) (payment mode
 	paymentsLst, err := service.paymentDAO.GetByAttribute(`payment_uid`, paymentUid)
 
 	if err != nil {
+		log.Println("[ERROR] PaymentService.ReadPaymentByUid. paymentDAO.GetByAttribute returned error:", err)
 		return payment, err
 	}
 
 	if paymentsLst.Len() == 0 {
+		log.Println("[ERROR] PaymentService.ReadPaymentByUid. Entity not found")
 		return payment, errors.New(serverrors.ErrEntityNotFound)
 	}
 
@@ -33,9 +36,21 @@ func (service *PaymentService) ReadPaymentByUid(paymentUid string) (payment mode
 }
 
 func (service *PaymentService) UpdatePaymentByUid(payment *models.Payment) (newPayment models.Payment, err error) {
-	return service.paymentDAO.Update(payment)
+	newPayment, err = service.paymentDAO.Update(payment)
+
+	if err != nil {
+		log.Println("[ERROR] PaymentService.UpdatePaymentByUid. paymentDAO.Update returned error:", err)
+	}
+
+	return newPayment, err
 }
 
 func (service *PaymentService) CreatePayment(payment *models.Payment) (newPayment models.Payment, err error) {
-	return service.paymentDAO.Create(payment)
+	newPayment, err = service.paymentDAO.Create(payment)
+
+	if err != nil {
+		log.Println("[ERROR] PaymentService.CreatePayment. paymentDAO.Create returned error:", err)
+	}
+
+	return newPayment, err
 }

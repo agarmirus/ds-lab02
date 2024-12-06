@@ -217,13 +217,13 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 	res.Write(reservJSON)
 }
 
-func (controller *ReservationController) handleReservByUidPatch(res http.ResponseWriter, req *http.Request) {
-	log.Println("[INFO] ReservationController.handleReservByUidPatch. Handling reservation by uid PATCH request")
+func (controller *ReservationController) handleReservByUidPut(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] ReservationController.handleReservByUidPut. Handling reservation by uid PUT request")
 
 	reservUid := req.PathValue("reservUid")
 
 	if strings.Trim(reservUid, ` `) == `` {
-		log.Println("[ERROR] ReservationController.handleReservByUidPatch. Invalid reservation uid")
+		log.Println("[ERROR] ReservationController.handleReservByUidPut. Invalid reservation uid")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -232,7 +232,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	n, err := req.Body.Read(reqBody)
 
 	if err != nil || n <= 0 {
-		log.Println("[ERROR] ReservationController.handleReservByUidPatch. Error while reading request body: ", err)
+		log.Println("[ERROR] ReservationController.handleReservByUidPut. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -241,7 +241,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	err = json.Unmarshal(reqBody, &reservation)
 
 	if err != nil {
-		log.Println("[ERROR] ReservationController.handleReservByUidPatch. Error while parsing JSON request body: ", err)
+		log.Println("[ERROR] ReservationController.handleReservByUidPut. Error while parsing JSON request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -250,7 +250,7 @@ func (controller *ReservationController) handleReservByUidPatch(res http.Respons
 	_, err = controller.service.UpdateReservByUid(&reservation)
 
 	if err != nil {
-		log.Println("[ERROR] ReservationController.handleReservByUidPatch. service.UpdateReservByUid returned error: ", err)
+		log.Println("[ERROR] ReservationController.handleReservByUidPut. service.UpdateReservByUid returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -357,9 +357,9 @@ func (controller *ReservationController) handleReservWithUidRequest(res http.Res
 	if req.Method == `GET` {
 		log.Println("[INFO] ReservationController.handleReservWithUidRequest. Got reservation with uid GET request")
 		controller.handleReservByUidGet(res, req)
-	} else if req.Method == `PATCH` {
-		log.Println("[INFO] ReservationController.handleReservWithUidRequest. Got reservation with uid PATCH request")
-		controller.handleReservByUidPatch(res, req)
+	} else if req.Method == `PUT` {
+		log.Println("[INFO] ReservationController.handleReservWithUidRequest. Got reservation with uid PUT request")
+		controller.handleReservByUidPut(res, req)
 	} else {
 		log.Println("[ERROR] ReservationController.handleReservWithUidRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)

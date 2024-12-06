@@ -349,18 +349,18 @@ func (service *GatewayService) performPaymentPostRequest(
 	return payment, nil
 }
 
-func (service *GatewayService) performLoyaltyPatchRequest(
+func (service *GatewayService) performLoyaltyPutRequest(
 	loyalty *models.Loyalty,
 ) (err error) {
 	loyaltyJSON, err := json.Marshal(loyalty)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performLoyaltyPatchRequest. Cannot create JSON object for request body")
+		log.Println("[ERROR] GatewayService.performLoyaltyPutRequest. Cannot create JSON object for request body")
 		return errors.New(serverrors.ErrJSONParse)
 	}
 
 	req, err := http.NewRequest(
-		"PATCH",
+		"PUT",
 		fmt.Sprintf(
 			"http://%s:%d/api/v1/loyalty/%d",
 			service.loyaltyServiceHost,
@@ -371,14 +371,14 @@ func (service *GatewayService) performLoyaltyPatchRequest(
 	)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performLoyaltyPatchRequest. Error while creating new request")
+		log.Println("[ERROR] GatewayService.performLoyaltyPutRequest. Error while creating new request")
 		return errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performLoyaltyPatchRequest. Error while sending request")
+		log.Println("[ERROR] GatewayService.performLoyaltyPutRequest. Error while sending request")
 		return errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -536,18 +536,18 @@ func (service *GatewayService) performLoyaltyByUsernameGetRequest(
 	return loyalty, nil
 }
 
-func (service *GatewayService) performReservPatchRequest(
+func (service *GatewayService) performReservPutRequest(
 	reservation *models.Reservation,
 ) (err error) {
 	reservJSON, err := json.Marshal(reservation)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performReservPatchRequest. Cannot create JSON object for request body")
+		log.Println("[ERROR] GatewayService.performReservPutRequest. Cannot create JSON object for request body")
 		return errors.New(serverrors.ErrJSONParse)
 	}
 
 	req, err := http.NewRequest(
-		"PATCH",
+		"PUT",
 		fmt.Sprintf(
 			"http://%s:%d/api/v1/reservations/%s",
 			service.loyaltyServiceHost,
@@ -558,32 +558,32 @@ func (service *GatewayService) performReservPatchRequest(
 	)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performReservPatchRequest. Error while creating new request")
+		log.Println("[ERROR] GatewayService.performReservPutRequest. Error while creating new request")
 		return errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performReservPatchRequest. Error while sending request")
+		log.Println("[ERROR] GatewayService.performReservPutRequest. Error while sending request")
 		return errors.New(serverrors.ErrRequestSend)
 	}
 
 	return nil
 }
 
-func (service *GatewayService) performPaymentPatchRequest(
+func (service *GatewayService) performPaymentPutRequest(
 	payment *models.Payment,
 ) (err error) {
 	paymentJSON, err := json.Marshal(payment)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performPaymentPatchRequest. Cannot create JSON object for request body")
+		log.Println("[ERROR] GatewayService.performPaymentPutRequest. Cannot create JSON object for request body")
 		return errors.New(serverrors.ErrJSONParse)
 	}
 
 	req, err := http.NewRequest(
-		"PATCH",
+		"PUT",
 		fmt.Sprintf(
 			"http://%s:%d/api/v1/payment/%s",
 			service.paymentServiceHost,
@@ -594,14 +594,14 @@ func (service *GatewayService) performPaymentPatchRequest(
 	)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performPaymentPatchRequest. Error while creating new request")
+		log.Println("[ERROR] GatewayService.performPaymentPutRequest. Error while creating new request")
 		return errors.New(serverrors.ErrNewRequestForming)
 	}
 
 	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.performPaymentPatchRequest. Error while sending request")
+		log.Println("[ERROR] GatewayService.performPaymentPutRequest. Error while sending request")
 		return errors.New(serverrors.ErrRequestSend)
 	}
 
@@ -763,10 +763,10 @@ func (service *GatewayService) CreateReservation(
 
 	loyalty.ReservationCount++
 
-	err = service.performLoyaltyPatchRequest(&loyalty)
+	err = service.performLoyaltyPutRequest(&loyalty)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.CreateReservation. performLoyaltyPatchRequest returned error:", err)
+		log.Println("[ERROR] GatewayService.CreateReservation. performLoyaltyPutRequest returned error:", err)
 		return crReservRes, err
 	}
 
@@ -842,10 +842,10 @@ func (service *GatewayService) DeleteReservation(
 	}
 
 	reservation.Status = `CANCELED`
-	err = service.performReservPatchRequest(&reservation)
+	err = service.performReservPutRequest(&reservation)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.DeleteReservation. Error while patching reservation: ", err)
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while puting reservation: ", err)
 		return err
 	}
 
@@ -857,10 +857,10 @@ func (service *GatewayService) DeleteReservation(
 	}
 
 	payment.Status = `CANCELED`
-	err = service.performPaymentPatchRequest(&payment)
+	err = service.performPaymentPutRequest(&payment)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.DeleteReservation. Error while patching payment: ", err)
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while puting payment: ", err)
 		return err
 	}
 
@@ -873,10 +873,10 @@ func (service *GatewayService) DeleteReservation(
 
 	loyalty.ReservationCount--
 
-	err = service.performLoyaltyPatchRequest(&loyalty)
+	err = service.performLoyaltyPutRequest(&loyalty)
 
 	if err != nil {
-		log.Println("[ERROR] GatewayService.DeleteReservation. Error while patching loyalty: ", err)
+		log.Println("[ERROR] GatewayService.DeleteReservation. Error while puting loyalty: ", err)
 	}
 
 	return err

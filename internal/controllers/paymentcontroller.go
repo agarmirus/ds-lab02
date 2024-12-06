@@ -101,13 +101,13 @@ func (controller *PaymentController) handlePaymentByUidGet(res http.ResponseWrit
 	res.Write(paymentJSON)
 }
 
-func (controller *PaymentController) handlePaymentByUidPatch(res http.ResponseWriter, req *http.Request) {
-	log.Println("[INFO] PaymentController.handlePaymentByUidPatch. Handling payment by uid PATCH request")
+func (controller *PaymentController) handlePaymentByUidPut(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] PaymentController.handlePaymentByUidPut. Handling payment by uid PUT request")
 
 	paymentUid := req.PathValue("paymentUid")
 
 	if strings.Trim(paymentUid, ` `) == `` {
-		log.Println("[ERROR] PaymentController.handlePaymentByUidPatch. Invalid payment uid")
+		log.Println("[ERROR] PaymentController.handlePaymentByUidPut. Invalid payment uid")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -116,7 +116,7 @@ func (controller *PaymentController) handlePaymentByUidPatch(res http.ResponseWr
 	n, err := req.Body.Read(reqBody)
 
 	if err != nil || n <= 0 {
-		log.Println("[ERROR] PaymentController.handlePaymentByUidPatch. Error while reading request body: ", err)
+		log.Println("[ERROR] PaymentController.handlePaymentByUidPut. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -125,7 +125,7 @@ func (controller *PaymentController) handlePaymentByUidPatch(res http.ResponseWr
 	err = json.Unmarshal(reqBody, &payment)
 
 	if err != nil {
-		log.Println("[ERROR] PaymentController.handlePaymentByUidPatch. Error while parsing JSON request body: ", err)
+		log.Println("[ERROR] PaymentController.handlePaymentByUidPut. Error while parsing JSON request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -134,7 +134,7 @@ func (controller *PaymentController) handlePaymentByUidPatch(res http.ResponseWr
 	_, err = controller.service.UpdatePaymentByUid(&payment)
 
 	if err != nil {
-		log.Println("[ERROR] PaymentController.handlePaymentByUidPatch. service.UpdatePaymentByUid returned error: ", err)
+		log.Println("[ERROR] PaymentController.handlePaymentByUidPut. service.UpdatePaymentByUid returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -166,9 +166,9 @@ func (controller *PaymentController) handlePaymentByUidRequest(res http.Response
 	if req.Method == `GET` {
 		log.Println("[INFO] PaymentController.handlePaymentByUidRequest. Got payment by uid GET request")
 		controller.handlePaymentByUidGet(res, req)
-	} else if req.Method == `PATCH` {
-		log.Println("[INFO] PaymentController.handlePaymentByUidRequest. Got payment by uid PATCH request")
-		controller.handlePaymentByUidPatch(res, req)
+	} else if req.Method == `PUT` {
+		log.Println("[INFO] PaymentController.handlePaymentByUidRequest. Got payment by uid PUT request")
+		controller.handlePaymentByUidPut(res, req)
 	} else {
 		log.Println("[ERROR] PaymentController.handlePaymentByUidRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)

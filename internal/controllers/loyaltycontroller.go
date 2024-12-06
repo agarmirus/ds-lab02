@@ -66,13 +66,13 @@ func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.Respons
 	res.Write(loyaltyJSON)
 }
 
-func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWriter, req *http.Request) {
-	log.Println("[INFO] LoyaltyController.handleLoyaltyByIdPatch. Handling loyalty by id PATCH request")
+func (controller *LoyaltyController) handleLoyaltyByIdPut(res http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] LoyaltyController.handleLoyaltyByIdPut. Handling loyalty by id PUT request")
 
 	loyaltyId, err := strconv.Atoi(req.PathValue(`loyaltyId`))
 
 	if err != nil {
-		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. Invalid loyalty id: ", err)
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPut. Invalid loyalty id: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -81,7 +81,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 	n, err := req.Body.Read(reqBody)
 
 	if err != nil || n <= 0 {
-		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. Error while reading request body: ", err)
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPut. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -90,7 +90,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 	err = json.Unmarshal(reqBody, &loyalty)
 
 	if err != nil {
-		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. Error while parsing JSON request body: ", err)
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPut. Error while parsing JSON request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -99,7 +99,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPatch(res http.ResponseWri
 	_, err = controller.service.UpdateLoyaltyById(&loyalty)
 
 	if err != nil {
-		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPatch. service.UpdateLoyaltyById returned error: ", err)
+		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPut. service.UpdateLoyaltyById returned error: ", err)
 		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
@@ -123,9 +123,9 @@ func (controller *LoyaltyController) handleLoyaltyRequest(res http.ResponseWrite
 }
 
 func (controller *LoyaltyController) handleLoyaltyByIdRequest(res http.ResponseWriter, req *http.Request) {
-	if req.Method == `PATCH` {
-		log.Println("[INFO] LoyaltyController.handleLoyaltyByIdRequest. Got loyalty by id PATCH request")
-		controller.handleLoyaltyByIdPatch(res, req)
+	if req.Method == `PUT` {
+		log.Println("[INFO] LoyaltyController.handleLoyaltyByIdRequest. Got loyalty by id PUT request")
+		controller.handleLoyaltyByIdPut(res, req)
 	} else {
 		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdRequest. Method not allowed")
 		res.WriteHeader(http.StatusMethodNotAllowed)

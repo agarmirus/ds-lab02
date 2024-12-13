@@ -58,24 +58,28 @@ jobs:
           reporters: '[ "cli" ]'
       
       - name: Show gateway service log
+        if: always()
         run: |
           docker exec -it gateway /bin/bash
           cat app.log
           exit
       
       - name: Show reservation service log
+        if: always()
         run: |
           docker exec -it reservation /bin/bash
           cat app.log
           exit
       
       - name: Show loyalty service log
+        if: always()
         run: |
           docker exec -it loyalty /bin/bash
           cat app.log
           exit
         
       - name: Show payment service log
+        if: always()
         run: |
           docker exec -it payment /bin/bash
           cat app.log

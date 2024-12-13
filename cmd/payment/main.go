@@ -47,7 +47,7 @@ func buildService(configData *paymentConfigDataStruct) (controller controllers.I
 func main() {
 	log.Println("[INFO] Starting server...")
 
-	file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("/logs/payment.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
 		log.Fatalln("[FATAL] Main. Failed to open log file: ", err)

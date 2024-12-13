@@ -56,6 +56,30 @@ jobs:
           environment: postman/environment.json
           delayRequest: 100
           reporters: '[ "cli" ]'
+      
+      - name: Show gateway service log
+        run: |
+          docker exec -it gateway /bin/bash
+          cat app.log
+          exit
+      
+      - name: Show reservation service log
+        run: |
+          docker exec -it reservation /bin/bash
+          cat app.log
+          exit
+      
+      - name: Show loyalty service log
+        run: |
+          docker exec -it loyalty /bin/bash
+          cat app.log
+          exit
+        
+      - name: Show payment service log
+        run: |
+          docker exec -it payment /bin/bash
+          cat app.log
+          exit
 
       - uses: education/autograding@v1
         id: autograder

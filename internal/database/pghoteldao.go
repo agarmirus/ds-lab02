@@ -64,6 +64,8 @@ func (dao *PostgresHotelDAO) GetPaginated(
 		return resLst, serverrors.ErrQueryResRead
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		var hotel models.Hotel
 		err = rows.Scan(
@@ -103,6 +105,7 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel
 		`select * from hotels where id = $1;`,
 		hotel.Id,
 	)
+
 	err = row.Scan(
 		&resHotel.Id, &resHotel.Uid,
 		&resHotel.Name, &resHotel.Country,
@@ -147,6 +150,8 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 
 		return resLst, nil
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var hotel models.Hotel

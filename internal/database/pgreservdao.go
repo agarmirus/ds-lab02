@@ -71,6 +71,7 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 		reservation.Status, reservation.StartDate,
 		reservation.EndDate,
 	)
+
 	err = row.Scan(
 		&newReservation.Id, &newReservation.Uid,
 		&newReservation.Username, &newReservation.PaymentUid,
@@ -123,6 +124,7 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 		`select * from reservation where %s = $1;`,
 		attrName,
 	)
+
 	rows, err := db.Query(queryStr, attrValue)
 
 	if err != nil {
@@ -133,6 +135,8 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 
 		return resLst, nil
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var reservation models.Reservation
@@ -175,6 +179,7 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 		reservation.Status, reservation.StartDate, reservation.EndDate,
 		reservation.Uid,
 	)
+
 	err = row.Scan(
 		&updatedReservation.Id, &updatedReservation.Uid,
 		&updatedReservation.Username, &updatedReservation.PaymentUid,

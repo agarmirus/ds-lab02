@@ -73,6 +73,8 @@ func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string)
 		return resLst, nil
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		var loyalty models.Loyalty
 		err = rows.Scan(
@@ -110,6 +112,7 @@ func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty m
 		loyalty.Username, loyalty.ReservationCount, loyalty.Status, loyalty.Discount,
 		loyalty.Id,
 	)
+
 	err = row.Scan(
 		&updatedLoyalty.Id, &updatedLoyalty.Username,
 		&updatedLoyalty.ReservationCount, &updatedLoyalty.Status,

@@ -61,6 +61,7 @@ func (dao *PostgresPaymentDAO) Create(payment *models.Payment) (newPayment model
 		returning *;`,
 		payment.Uid, payment.Status, payment.Price,
 	)
+
 	err = row.Scan(
 		&newPayment.Id, &newPayment.Uid,
 		&newPayment.Status, &newPayment.Price,
@@ -122,6 +123,8 @@ func (dao *PostgresPaymentDAO) GetByAttribute(attrName string, attrValue string)
 		return resLst, nil
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		var payment models.Payment
 		err = rows.Scan(
@@ -158,6 +161,7 @@ func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (updatedPayment m
 		payment.Status, payment.Price,
 		payment.Uid,
 	)
+
 	err = row.Scan(
 		&updatedPayment.Id, &updatedPayment.Uid,
 		&updatedPayment.Status, &updatedPayment.Price,

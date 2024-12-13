@@ -7,7 +7,7 @@ GRANT ALL PRIVILEGES ON DATABASE reservations TO program;
 CREATE DATABASE loyalties;
 GRANT ALL PRIVILEGES ON DATABASE loyalties TO program;
 
-\c payments
+\c payments program
 
 CREATE TABLE payment
 (
@@ -18,7 +18,7 @@ CREATE TABLE payment
     price       INT         NOT NULL
 );
 
-\c reservations
+\c reservations program
 
 CREATE TABLE hotels
 (
@@ -32,6 +32,9 @@ CREATE TABLE hotels
     price     INT          NOT NULL
 );
 
+INSERT INTO hotels
+VALUES (1, '049161bb-badd-4fa8-9d90-87c9a82b0668', 'Ararat Park Hyatt Moscow', 'Россия', 'Москва', 'Неглинная ул., 4', 5, 10000);
+
 CREATE TABLE reservation
 (
     id              SERIAL PRIMARY KEY,
@@ -42,10 +45,10 @@ CREATE TABLE reservation
     status          VARCHAR(20) NOT NULL
         CHECK (status IN ('PAID', 'CANCELED')),
     start_date      TIMESTAMP WITH TIME ZONE,
-    end_data        TIMESTAMP WITH TIME ZONE
+    end_date        TIMESTAMP WITH TIME ZONE
 );
 
-\c loyalties
+\c loyalties program
 
 CREATE TABLE loyalty
 (
@@ -56,3 +59,6 @@ CREATE TABLE loyalty
         CHECK (status IN ('BRONZE', 'SILVER', 'GOLD')),
     discount          INT         NOT NULL
 );
+
+INSERT INTO loyalty
+VALUES (1, 'Test Max', 25, 'GOLD', 10);

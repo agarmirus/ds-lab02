@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"os"
@@ -78,21 +77,21 @@ func main() {
 
 	if err != nil {
 		log.Fatalln("[FATAL] Main. Failed to read config file: ", err)
-		panic(errors.New(serverrors.ErrConfigRead))
+		panic(serverrors.ErrConfigRead)
 	}
 
 	controller, err := buildService(&configData)
 
 	if err != nil {
 		log.Fatalln("[FATAL] Main. Failed to build service: ", err)
-		panic(errors.New(serverrors.ErrServiceBuild))
+		panic(serverrors.ErrServiceBuild)
 	}
 
 	err = controller.Prepare()
 
 	if err != nil {
 		log.Fatalln("[FATAL] Main. Failed to prepare API: ", err)
-		panic(errors.New(serverrors.ErrControllerPrepare))
+		panic(serverrors.ErrControllerPrepare)
 	}
 
 	log.Println("[INFO] Running server...")

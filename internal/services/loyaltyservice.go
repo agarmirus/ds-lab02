@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"log"
 
 	"github.com/agarmirus/ds-lab02/internal/database"
@@ -29,7 +28,7 @@ func (service *LoyaltyService) ReadLoyaltyByUsername(username string) (loyalty m
 
 	if loyaltiesLst.Len() == 0 {
 		log.Println("[ERROR] LoyaltyService.ReadLoyaltyByUsername. Entity not found")
-		return loyalty, errors.New(serverrors.ErrEntityNotFound)
+		return loyalty, serverrors.ErrEntityNotFound
 	}
 
 	return loyaltiesLst.Front().Value.(models.Loyalty), nil

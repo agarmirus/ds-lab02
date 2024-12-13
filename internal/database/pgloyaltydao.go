@@ -4,9 +4,10 @@ import (
 	"container/list"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
-	_ "github.com/jackc/pgx"
+	_ "github.com/lib/pq"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -26,12 +27,12 @@ func (dao *PostgresLoyaltyDAO) SetConnectionString(connStr string) {
 
 func (dao *PostgresLoyaltyDAO) Create(loyalty *models.Loyalty) (models.Loyalty, error) {
 	log.Println("[ERROR] PostgresLoyaltyDAO.Create. Method is not implemented")
-	return models.Loyalty{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return models.Loyalty{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresLoyaltyDAO) Get() (list.List, error) {
 	log.Println("[ERROR] PostgresLoyaltyDAO.Get. Method is not implemented")
-	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return list.List{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresLoyaltyDAO) GetPaginated(
@@ -39,12 +40,12 @@ func (dao *PostgresLoyaltyDAO) GetPaginated(
 	pageSize int,
 ) (resLst list.List, err error) {
 	log.Println("[ERROR] PostgresLoyaltyDAO.GetPaginated. Method is not implemented")
-	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return list.List{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresLoyaltyDAO) GetById(loyalty *models.Loyalty) (models.Loyalty, error) {
 	log.Println("[ERROR] PostgresLoyaltyDAO.GetById. Method is not implemented")
-	return models.Loyalty{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return models.Loyalty{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
@@ -52,18 +53,21 @@ func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresLoyaltyDAO.GetByAttribute. Cannot connect to database:", err)
-		return resLst, errors.New(serverrors.ErrDatabaseConnection)
+		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	rows, err := db.Query(
-		`select * from loyalty where $1 = $2;`,
-		attrName, attrValue,
+	defer db.Close()
+
+	queryStr := fmt.Sprintf(
+		`select * from loyalty where %s = $1;`,
+		attrName,
 	)
+	rows, err := db.Query(queryStr, attrValue)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresLoyaltyDAO.GetByAttribute. Error while executing query:", err)
-			return resLst, errors.New(serverrors.ErrQueryResRead)
+			return resLst, serverrors.ErrQueryResRead
 		}
 
 		return resLst, nil
@@ -71,11 +75,15 @@ func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string)
 
 	for rows.Next() {
 		var loyalty models.Loyalty
-		err = rows.Scan(&loyalty)
+		err = rows.Scan(
+			&loyalty.Id, &loyalty.Username,
+			&loyalty.ReservationCount, &loyalty.Status,
+			&loyalty.Discount,
+		)
 
 		if err != nil {
 			log.Println("[ERROR] PostgresLoyaltyDAO.GetByAttribute. Error while reading query result:", err)
-			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+			return list.List{}, serverrors.ErrQueryResRead
 		}
 
 		resLst.PushBack(loyalty)
@@ -89,8 +97,10 @@ func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty m
 
 	if err != nil {
 		log.Println("[ERROR] PostgresLoyaltyDAO.Update. Cannot connect to database:", err)
-		return updatedLoyalty, errors.New(serverrors.ErrDatabaseConnection)
+		return updatedLoyalty, serverrors.ErrDatabaseConnection
 	}
+
+	defer db.Close()
 
 	row := db.QueryRow(
 		`update loyalty
@@ -100,15 +110,19 @@ func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty m
 		loyalty.Username, loyalty.ReservationCount, loyalty.Status, loyalty.Discount,
 		loyalty.Id,
 	)
-	err = row.Scan(&updatedLoyalty)
+	err = row.Scan(
+		&updatedLoyalty.Id, &updatedLoyalty.Username,
+		&updatedLoyalty.ReservationCount, &updatedLoyalty.Status,
+		&updatedLoyalty.Discount,
+	)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresLoyaltyDAO.Update. Entity not found")
-			err = errors.New(serverrors.ErrEntityNotFound)
+			err = serverrors.ErrEntityNotFound
 		} else {
 			log.Println("[ERROR] PostgresLoyaltyDAO.Update. Error while reading query result:", err)
-			err = errors.New(serverrors.ErrQueryResRead)
+			err = serverrors.ErrQueryResRead
 		}
 	}
 
@@ -117,10 +131,10 @@ func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty m
 
 func (dao *PostgresLoyaltyDAO) Delete(loyalty *models.Loyalty) error {
 	log.Println("[ERROR] PostgresLoyaltyDAO.Delete. Method is not implemented")
-	return errors.New(serverrors.ErrMethodIsNotImplemented)
+	return serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresLoyaltyDAO) DeleteByAttr(attrName string, attrValue string) error {
 	log.Println("[ERROR] PostgresLoyaltyDAO.DeleteByAttr. Method is not implemented")
-	return errors.New(serverrors.ErrMethodIsNotImplemented)
+	return serverrors.ErrMethodIsNotImplemented
 }

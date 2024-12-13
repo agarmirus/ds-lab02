@@ -2,7 +2,6 @@ package services
 
 import (
 	"container/list"
-	"errors"
 	"log"
 
 	"github.com/agarmirus/ds-lab02/internal/database"
@@ -28,7 +27,7 @@ func (service *ReservationService) ReadPaginatedHotels(
 ) (hotelsLst list.List, err error) {
 	if page <= 0 || pageSize <= 0 {
 		log.Println("[ERROR] ReservationService.ReadPaginatedHotels. Invalid page and pageSize values")
-		return hotelsLst, errors.New(serverrors.ErrInvalidPagesData)
+		return hotelsLst, serverrors.ErrInvalidPagesData
 	}
 
 	hotelsLst, err = service.hotelsDAO.GetPaginated(page, pageSize)
@@ -61,14 +60,14 @@ func (service *ReservationService) ReadHotelByUid(hotelUid string) (hotel models
 
 	if hotelsLst.Len() == 0 {
 		log.Println("[ERROR] ReservationService.ReadHotelByUid. Entity not found")
-		return hotel, errors.New(serverrors.ErrEntityNotFound)
+		return hotel, serverrors.ErrEntityNotFound
 	}
 
 	return hotelsLst.Front().Value.(models.Hotel), nil
 }
 
 func (service *ReservationService) ReadReservsByUsername(username string) (reservsLst list.List, err error) {
-	reservsLst, err = service.hotelsDAO.GetByAttribute(`username`, username)
+	reservsLst, err = service.reservsDAO.GetByAttribute(`username`, username)
 
 	if err != nil {
 		log.Println("[ERROR] ReservationService.ReadReservsByUsername. hotelsDAO.GetByAttribute returned error:", err)
@@ -77,14 +76,14 @@ func (service *ReservationService) ReadReservsByUsername(username string) (reser
 
 	if reservsLst.Len() == 0 {
 		log.Println("[ERROR] ReservationService.ReadReservsByUsername. Entity not found")
-		return reservsLst, errors.New(serverrors.ErrEntityNotFound)
+		return reservsLst, serverrors.ErrEntityNotFound
 	}
 
 	return reservsLst, nil
 }
 
 func (service *ReservationService) ReadReservByUid(reservUid string) (reservation models.Reservation, err error) {
-	reservsLst, err := service.hotelsDAO.GetByAttribute(`reservation_uid`, reservUid)
+	reservsLst, err := service.reservsDAO.GetByAttribute(`reservation_uid`, reservUid)
 
 	if err != nil {
 		log.Println("[ERROR] ReservationService.ReadReservByUid. hotelsDAO.GetByAttribute returned error:", err)
@@ -93,7 +92,7 @@ func (service *ReservationService) ReadReservByUid(reservUid string) (reservatio
 
 	if reservsLst.Len() == 0 {
 		log.Println("[ERROR] ReservationService.ReadReservByUid. Entity not found")
-		return reservation, errors.New(serverrors.ErrEntityNotFound)
+		return reservation, serverrors.ErrEntityNotFound
 	}
 
 	return reservsLst.Front().Value.(models.Reservation), nil

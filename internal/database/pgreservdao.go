@@ -4,11 +4,12 @@ import (
 	"container/list"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
 	"github.com/google/uuid"
-	_ "github.com/jackc/pgx"
+	_ "github.com/lib/pq"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -28,17 +29,17 @@ func (dao *PostgresReservationDAO) SetConnectionString(connStr string) {
 
 func validateReservation(reservation *models.Reservation) (err error) {
 	if uuid.Validate(reservation.Uid) != nil {
-		err = errors.New(serverrors.ErrInvalidReservUid)
+		err = serverrors.ErrInvalidReservUid
 	} else if strings.Trim(reservation.Username, ` `) == `` {
-		err = errors.New(serverrors.ErrInvalidReservUsername)
+		err = serverrors.ErrInvalidReservUsername
 	} else if uuid.Validate(reservation.Uid) != nil {
-		err = errors.New(serverrors.ErrInvalidReservPayUID)
+		err = serverrors.ErrInvalidReservPayUID
 	} else if reservation.HotelId <= 0 {
-		err = errors.New(serverrors.ErrInvalidReservHotelId)
+		err = serverrors.ErrInvalidReservHotelId
 	} else if reservation.Status != `PAID` && reservation.Status != `CANCELED` {
-		err = errors.New(serverrors.ErrInvalidReservStatus)
-	} else if reservation.StartDate.Unix() < reservation.EndDate.Unix() {
-		err = errors.New(serverrors.ErrInvalidReservDates)
+		err = serverrors.ErrInvalidReservStatus
+	} else if reservation.StartDate > reservation.EndDate {
+		err = serverrors.ErrInvalidReservDates
 	}
 
 	return err
@@ -56,8 +57,10 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.Create. Cannot connect to database:", err)
-		return newReservation, errors.New(serverrors.ErrDatabaseConnection)
+		return newReservation, serverrors.ErrDatabaseConnection
 	}
+
+	defer db.Close()
 
 	row := db.QueryRow(
 		`insert into reservation (reservation_uid, username, payment_uid, hotel_id, status, start_date, end_date)
@@ -65,18 +68,23 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 		returning *;`,
 		reservation.Uid, reservation.Username,
 		reservation.PaymentUid, reservation.HotelId,
-		reservation.Status, reservation.StartDate.Format(`%F`),
-		reservation.EndDate.Format(`%F`),
+		reservation.Status, reservation.StartDate,
+		reservation.EndDate,
 	)
-	err = row.Scan(&newReservation)
+	err = row.Scan(
+		&newReservation.Id, &newReservation.Uid,
+		&newReservation.Username, &newReservation.PaymentUid,
+		&newReservation.HotelId, &newReservation.Status,
+		&newReservation.StartDate, &newReservation.EndDate,
+	)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresReservationDAO.Create. Entity not found")
-			err = errors.New(serverrors.ErrEntityNotFound)
+			err = serverrors.ErrEntityNotFound
 		} else {
 			log.Println("[ERROR] PostgresReservationDAO.Create. Error while reading query result:", err)
-			err = errors.New(serverrors.ErrQueryResRead)
+			err = serverrors.ErrQueryResRead
 		}
 	}
 
@@ -85,7 +93,7 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 
 func (dao *PostgresReservationDAO) Get() (list.List, error) {
 	log.Println("[ERROR] PostgresReservationDAO.Get. Method is not implemented")
-	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return list.List{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresReservationDAO) GetPaginated(
@@ -93,12 +101,12 @@ func (dao *PostgresReservationDAO) GetPaginated(
 	pageSize int,
 ) (resLst list.List, err error) {
 	log.Println("[ERROR] PostgresLoyaltyDAO.GetPaginated. Method is not implemented")
-	return list.List{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return list.List{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresReservationDAO) GetById(reservation *models.Reservation) (models.Reservation, error) {
 	log.Println("[ERROR] PostgresReservationDAO.GetById. Method is not implemented")
-	return models.Reservation{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return models.Reservation{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
@@ -106,18 +114,21 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.GetByAttribute. Cannot connect to database:", err)
-		return resLst, errors.New(serverrors.ErrDatabaseConnection)
+		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	rows, err := db.Query(
-		`select * from reservation where $1 == $2;`,
-		attrName, attrValue,
+	defer db.Close()
+
+	queryStr := fmt.Sprintf(
+		`select * from reservation where %s = $1;`,
+		attrName,
 	)
+	rows, err := db.Query(queryStr, attrValue)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresReservationDAO.GetByAttribute. Error while executing query:", err)
-			return resLst, errors.New(serverrors.ErrQueryResRead)
+			return resLst, serverrors.ErrQueryResRead
 		}
 
 		return resLst, nil
@@ -125,11 +136,16 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 
 	for rows.Next() {
 		var reservation models.Reservation
-		err = rows.Scan(&reservation)
+		err = rows.Scan(
+			&reservation.Id, &reservation.Uid,
+			&reservation.Username, &reservation.PaymentUid,
+			&reservation.HotelId, &reservation.Status,
+			&reservation.StartDate, &reservation.EndDate,
+		)
 
 		if err != nil {
 			log.Println("[ERROR] PostgresReservationDAO.GetByAttribute. Error while reading query result:", err)
-			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+			return list.List{}, serverrors.ErrQueryResRead
 		}
 
 		resLst.PushBack(reservation)
@@ -143,8 +159,12 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.Update. Cannot connect to database:", err)
-		return updatedReservation, errors.New(serverrors.ErrDatabaseConnection)
+		return updatedReservation, serverrors.ErrDatabaseConnection
 	}
+
+	defer db.Close()
+
+	log.Println("[TRACE] PostgresReservationDAO.Update. Status =", reservation.Status)
 
 	row := db.QueryRow(
 		`update reservation
@@ -152,18 +172,23 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 		where reservation_uid = $7
 		returning *`,
 		reservation.Username, reservation.PaymentUid, reservation.HotelId,
-		reservation.Status, reservation.StartDate.Format(`%F`), reservation.EndDate.Format(`%F`),
+		reservation.Status, reservation.StartDate, reservation.EndDate,
 		reservation.Uid,
 	)
-	err = row.Scan(&updatedReservation)
+	err = row.Scan(
+		&updatedReservation.Id, &updatedReservation.Uid,
+		&updatedReservation.Username, &updatedReservation.PaymentUid,
+		&updatedReservation.HotelId, &updatedReservation.Status,
+		&updatedReservation.StartDate, &updatedReservation.EndDate,
+	)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresReservationDAO.Update. Entity not found")
-			err = errors.New(serverrors.ErrEntityNotFound)
+			err = serverrors.ErrEntityNotFound
 		} else {
 			log.Println("[ERROR] PostgresReservationDAO.Update. Error while reading query result:", err)
-			err = errors.New(serverrors.ErrQueryResRead)
+			err = serverrors.ErrQueryResRead
 		}
 	}
 
@@ -172,7 +197,7 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 
 func (dao *PostgresReservationDAO) Delete(reservation *models.Reservation) error {
 	log.Println("[ERROR] PostgresReservationDAO.Delete. Method is not implemented")
-	return errors.New(serverrors.ErrMethodIsNotImplemented)
+	return serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresReservationDAO) DeleteByAttr(attrName string, attrValue string) (err error) {
@@ -180,8 +205,10 @@ func (dao *PostgresReservationDAO) DeleteByAttr(attrName string, attrValue strin
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.DeleteByAttr. Cannot connect to database:", err)
-		return errors.New(serverrors.ErrDatabaseConnection)
+		return serverrors.ErrDatabaseConnection
 	}
+
+	defer db.Close()
 
 	_, err = db.Exec(
 		`delete from reservation where $1 = $2;`,
@@ -190,7 +217,7 @@ func (dao *PostgresReservationDAO) DeleteByAttr(attrName string, attrValue strin
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.DeleteByAttr. Error while executing query:", err)
-		return errors.New(serverrors.ErrQueryExec)
+		return serverrors.ErrQueryExec
 	}
 
 	return nil

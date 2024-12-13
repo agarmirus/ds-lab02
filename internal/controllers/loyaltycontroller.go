@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -44,7 +45,7 @@ func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.Respons
 
 	if err != nil {
 		log.Println("[ERROR] LoyaltyController.handleLoyaltyByUsernameGet. service.ReadLoyaltyByUsername returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -61,8 +62,8 @@ func (controller *LoyaltyController) handleLoyaltyByUsernameGet(res http.Respons
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(loyaltyJSON)
 }
 
@@ -77,10 +78,11 @@ func (controller *LoyaltyController) handleLoyaltyByIdPut(res http.ResponseWrite
 		return
 	}
 
-	var reqBody []byte
-	n, err := req.Body.Read(reqBody)
+	defer req.Body.Close()
 
-	if err != nil || n <= 0 {
+	reqBody, err := io.ReadAll(req.Body)
+
+	if err != nil {
 		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPut. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -100,7 +102,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPut(res http.ResponseWrite
 
 	if err != nil {
 		log.Println("[ERROR] LoyaltyController.handleLoyaltyByIdPut. service.UpdateLoyaltyById returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -109,7 +111,7 @@ func (controller *LoyaltyController) handleLoyaltyByIdPut(res http.ResponseWrite
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
+	res.WriteHeader(http.StatusNoContent)
 }
 
 func (controller *LoyaltyController) handleLoyaltyRequest(res http.ResponseWriter, req *http.Request) {

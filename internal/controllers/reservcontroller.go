@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -49,12 +50,18 @@ func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWri
 		return
 	}
 
-	var hotelsSlice []models.Hotel
+	if hotelsLst.Len() == 0 {
+		log.Println("[INFO] ReservationController.handleAllHotelsGet. Entities not found. Sending No Content code")
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	hotelsSlice := make([]models.Hotel, 0)
 	hotelsLstEl := hotelsLst.Front()
 
 	for hotelsLstEl != nil {
 		hotelsSlice = append(hotelsSlice, hotelsLstEl.Value.(models.Hotel))
-		hotelsLstEl.Next()
+		hotelsLstEl = hotelsLstEl.Next()
 	}
 
 	hotelsSliceJSON, err := json.Marshal(hotelsSlice)
@@ -65,8 +72,10 @@ func (controller *ReservationController) handleAllHotelsGet(res http.ResponseWri
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
+	log.Println("[INFO] hotelsSliceJSON", string(hotelsSliceJSON), page, pageSize)
+
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(hotelsSliceJSON)
 }
 
@@ -85,7 +94,7 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 
 	if err != nil {
 		log.Println("[ERROR] ReservationController.handleHotelByIdGet. service.ReadHotelById returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -102,8 +111,8 @@ func (controller *ReservationController) handleHotelByIdGet(res http.ResponseWri
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(hotelJSON)
 }
 
@@ -122,7 +131,7 @@ func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWr
 
 	if err != nil {
 		log.Println("[ERROR] ReservationController.handleHotelByUidGet. service.ReadHotelByUid returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -139,8 +148,8 @@ func (controller *ReservationController) handleHotelByUidGet(res http.ResponseWr
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(hotelJSON)
 }
 
@@ -159,7 +168,7 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 
 	if err != nil {
 		log.Println("[ERROR] ReservationController.handleReservsByUsernameGet. service.ReadReservsByUsername returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -168,12 +177,12 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 		return
 	}
 
-	var reservsSlice []models.Reservation
+	reservsSlice := make([]models.Reservation, 0)
 	reservsLstEl := reservsLst.Front()
 
 	for reservsLstEl != nil {
 		reservsSlice = append(reservsSlice, reservsLstEl.Value.(models.Reservation))
-		reservsLstEl.Next()
+		reservsLstEl = reservsLstEl.Next()
 	}
 
 	reservsSliceJSON, err := json.Marshal(reservsSlice)
@@ -184,8 +193,8 @@ func (controller *ReservationController) handleReservsByUsernameGet(res http.Res
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(reservsSliceJSON)
 }
 
@@ -204,7 +213,7 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 
 	if err != nil {
 		log.Println("[ERROR] ReservationController.handleReservByUidGet. service.ReadReservByUid returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -221,8 +230,8 @@ func (controller *ReservationController) handleReservByUidGet(res http.ResponseW
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(reservJSON)
 }
 
@@ -237,10 +246,11 @@ func (controller *ReservationController) handleReservByUidPut(res http.ResponseW
 		return
 	}
 
-	var reqBody []byte
-	n, err := req.Body.Read(reqBody)
+	defer req.Body.Close()
 
-	if err != nil || n <= 0 {
+	reqBody, err := io.ReadAll(req.Body)
+
+	if err != nil {
 		log.Println("[ERROR] ReservationController.handleReservByUidPut. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -260,7 +270,7 @@ func (controller *ReservationController) handleReservByUidPut(res http.ResponseW
 
 	if err != nil {
 		log.Println("[ERROR] ReservationController.handleReservByUidPut. service.UpdateReservByUid returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -269,16 +279,15 @@ func (controller *ReservationController) handleReservByUidPut(res http.ResponseW
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
+	res.WriteHeader(http.StatusNoContent)
 }
 
 func (controller *ReservationController) handleReservPost(res http.ResponseWriter, req *http.Request) {
 	log.Println("[INFO] ReservationController.handleReservPost. Handling reserfvation POST request")
 
-	var reqBody []byte
-	n, err := req.Body.Read(reqBody)
+	reqBody, err := io.ReadAll(req.Body)
 
-	if err != nil || n <= 0 {
+	if err != nil {
 		log.Println("[ERROR] ReservationController.handleReservPost. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -293,11 +302,11 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 		return
 	}
 
-	newReservation, err := controller.service.UpdateReservByUid(&reservation)
+	newReservation, err := controller.service.CreateReserv(&reservation)
 
 	if err != nil {
-		log.Println("[ERROR] ReservationController.handleReservPost. service.UpdateReservByUid returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		log.Println("[ERROR] ReservationController.handleReservPost. service.CreateReserv returned error: ", err)
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -314,8 +323,8 @@ func (controller *ReservationController) handleReservPost(res http.ResponseWrite
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(newReservationJSON)
 }
 

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"log"
 
 	"github.com/agarmirus/ds-lab02/internal/database"
@@ -29,7 +28,7 @@ func (service *PaymentService) ReadPaymentByUid(paymentUid string) (payment mode
 
 	if paymentsLst.Len() == 0 {
 		log.Println("[ERROR] PaymentService.ReadPaymentByUid. Entity not found")
-		return payment, errors.New(serverrors.ErrEntityNotFound)
+		return payment, serverrors.ErrEntityNotFound
 	}
 
 	return paymentsLst.Front().Value.(models.Payment), nil

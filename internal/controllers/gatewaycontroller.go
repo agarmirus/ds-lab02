@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -48,12 +49,17 @@ func (controller *GatewayController) handleAllHotelsGet(res http.ResponseWriter,
 		return
 	}
 
+	if len(pagRes.Items) == 0 {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	var pageResJSON []byte
 	pageResJSON, err = json.Marshal(pagRes)
 
 	if err == nil {
-		res.WriteHeader(http.StatusOK)
 		res.Header().Add(`Content-Type`, `application/json`)
+		res.WriteHeader(http.StatusOK)
 		res.Write(pageResJSON)
 	} else {
 		log.Println("[ERROR] GatewayController.handleAllHotelsGet. Cannot convert result into JSON format: ", err)
@@ -84,8 +90,8 @@ func (controller *GatewayController) handleUserInfoGet(res http.ResponseWriter, 
 	userInfoResJSON, err = json.Marshal(userInfoRes)
 
 	if err == nil {
-		res.WriteHeader(http.StatusOK)
 		res.Header().Add(`Content-Type`, `application/json`)
+		res.WriteHeader(http.StatusOK)
 		res.Write(userInfoResJSON)
 	} else {
 		log.Println("[ERROR] GatewayController.handleUserInfoGet. Cannot convert result into JSON format: ", err)
@@ -116,8 +122,8 @@ func (controller *GatewayController) handleUserReservationsGet(res http.Response
 	reservsResSliceJSON, err = json.Marshal(reservsResSlice)
 
 	if err == nil {
-		res.WriteHeader(http.StatusOK)
 		res.Header().Add(`Content-Type`, `application/json`)
+		res.WriteHeader(http.StatusOK)
 		res.Write(reservsResSliceJSON)
 	} else {
 		log.Println("[ERROR] GatewayController.handleUserReservationsGet. Cannot convert result into JSON format: ", err)
@@ -136,10 +142,9 @@ func (controller *GatewayController) handleNewReservationPost(res http.ResponseW
 		return
 	}
 
-	var reqBody []byte
-	n, err := req.Body.Read(reqBody)
+	reqBody, err := io.ReadAll(req.Body)
 
-	if err != nil || n <= 0 {
+	if err != nil {
 		log.Println("[ERROR] GatewayController.handleNewReservationPost. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -171,24 +176,24 @@ func (controller *GatewayController) handleNewReservationPost(res http.ResponseW
 		crReservResJSON, err = json.Marshal(crReservRes)
 
 		if err == nil {
-			res.WriteHeader(http.StatusOK)
 			res.Header().Add(`Content-Type`, `application/json`)
+			res.WriteHeader(http.StatusOK)
 			res.Write(crReservResJSON)
 		} else {
 			log.Println("[ERROR] GatewayController.handleNewReservationPost. Cannot convert result into JSON format: ", err)
 			res.WriteHeader(http.StatusInternalServerError)
 		}
 	} else {
-		log.Println("[ERROR] GatewayController.handleNewReservationPost. Invalid create reservation request")
+		log.Println("[ERROR] GatewayController.handleNewReservationPost. Invalid create reservation request:", err)
 		var validErrResJSON []byte
 		validErrResJSON, err = json.Marshal(validErrRes)
 
 		if err == nil {
-			res.WriteHeader(http.StatusBadRequest)
 			res.Header().Add(`Content-Type`, `application/json`)
+			res.WriteHeader(http.StatusBadRequest)
 			res.Write(validErrResJSON)
 		} else {
-			log.Println("[ERROR] GatewayController.handleNewReservationPost. Cannot convert result into JSON format: ", err)
+			log.Println("[ERROR] GatewayController.handleNewReservationPost. Cannot convert error result into JSON format: ", err)
 			res.WriteHeader(http.StatusInternalServerError)
 		}
 	}
@@ -210,7 +215,6 @@ func (controller *GatewayController) handleSingleReservationGet(res http.Respons
 
 	if err != nil {
 		log.Println("[ERROR] GatewayController.handleSingleReservationGet. service.ReadReservation returned error: ", err)
-		// TODO: Check for no results case
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -223,8 +227,8 @@ func (controller *GatewayController) handleSingleReservationGet(res http.Respons
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(reservResJSON)
 }
 
@@ -244,7 +248,6 @@ func (controller *GatewayController) handleSingleReservationDelete(res http.Resp
 
 	if err != nil {
 		log.Println("[ERROR] GatewayController.handleSingleReservationDelete. service.DeleteReservation returned error: ", err)
-		// TODO: Check for no results case
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -279,8 +282,8 @@ func (controller *GatewayController) handleLoyaltyGet(res http.ResponseWriter, r
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(loyaltyInfoResJSON)
 }
 

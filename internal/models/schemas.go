@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"time"
 
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -9,14 +8,14 @@ import (
 )
 
 type Reservation struct {
-	Id         int       `json:"id"`
-	Uid        string    `json:"reservationUid"`
-	Username   string    `json:"username"`
-	PaymentUid string    `json:"paymentUid"`
-	HotelId    int       `json:"hotelId"`
-	Status     string    `json:"status"`
-	StartDate  time.Time `json:"startDate"`
-	EndDate    time.Time `json:"endDate"`
+	Id         int    `json:"id"`
+	Uid        string `json:"reservationUid"`
+	Username   string `json:"username"`
+	PaymentUid string `json:"paymentUid"`
+	HotelId    int    `json:"hotelId"`
+	Status     string `json:"status"`
+	StartDate  string `json:"startDate"`
+	EndDate    string `json:"endDate"`
 }
 
 type Payment struct {
@@ -180,8 +179,8 @@ func ReservToReservRes(
 	payment *Payment,
 ) {
 	reservRes.ReservationUid = reservation.Uid
-	reservRes.StartDate = reservation.StartDate.Format(`%F`)
-	reservRes.EndDate = reservation.EndDate.Format(`%F`)
+	reservRes.StartDate = reservation.StartDate
+	reservRes.EndDate = reservation.EndDate
 	reservRes.Status = reservation.Status
 
 	hotelToHotelInfo(&reservRes.Hotel, hotel)
@@ -223,6 +222,7 @@ func ReservsSliceToUserInfoRes(
 	paymentsMap map[string]Payment,
 	loyalty *Loyalty,
 ) {
+	userInfoRes.Reservations = make([]ReservationResponse, 0)
 	ReservsSliceToReservRes(userInfoRes.Reservations, userReservsSlice, hotelsMap, paymentsMap)
 	LoyaltyToLoyaltyInfoRes(&userInfoRes.Loyalty, loyalty)
 }
@@ -236,8 +236,8 @@ func ReservToCrReservRes(
 ) {
 	crReservRes.ReservationUid = reservation.Uid
 	crReservRes.HotelUid = hotelUid
-	crReservRes.StartDate = reservation.StartDate.Format(`%F`)
-	crReservRes.EndDate = reservation.EndDate.Format(`%F`)
+	crReservRes.StartDate = reservation.StartDate
+	crReservRes.EndDate = reservation.EndDate
 	crReservRes.Discount = loyalty.Discount
 	crReservRes.Status = reservation.Status
 
@@ -251,19 +251,19 @@ func ValidateCrReservReq(
 		validErrRes.Errors = append(validErrRes.Errors, ErrorDiscription{Field: `hotelUid`, Error: `invalid uid`})
 	}
 
-	startDate, err := time.Parse(`%F`, createReservReq.StartDate)
+	startDate, err := time.Parse(time.DateOnly, createReservReq.StartDate)
 
 	if err != nil {
 		validErrRes.Errors = append(validErrRes.Errors, ErrorDiscription{Field: `startDate`, Error: `invalid date format`})
 	}
 
-	endDate, err := time.Parse(`%F`, createReservReq.EndDate)
+	endDate, err := time.Parse(time.DateOnly, createReservReq.EndDate)
 
 	if err != nil {
 		validErrRes.Errors = append(validErrRes.Errors, ErrorDiscription{Field: `endDate`, Error: `invalid date format`})
 	} else if startDate.Unix() > endDate.Unix() {
 		validErrRes.Errors = append(validErrRes.Errors, ErrorDiscription{Field: `startDate`, Error: `invalid date period`})
-		err = errors.New(serverrors.ErrInvalidReservDates)
+		err = serverrors.ErrInvalidReservDates
 	}
 
 	if err != nil {
@@ -271,4 +271,19 @@ func ValidateCrReservReq(
 	}
 
 	return validErrRes, err
+}
+
+func UpdateLoyaltyStatus(
+	loyalty *Loyalty,
+) {
+	if loyalty.ReservationCount > 20 {
+		loyalty.Status = `GOLD`
+		loyalty.Discount = 10
+	} else if loyalty.ReservationCount > 10 {
+		loyalty.Status = `SILVER`
+		loyalty.Discount = 7
+	} else {
+		loyalty.Status = `BRONZE`
+		loyalty.Discount = 5
+	}
 }

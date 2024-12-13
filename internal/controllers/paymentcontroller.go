@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -36,7 +37,7 @@ func (controller *PaymentController) handlePaymentByPricePost(res http.ResponseW
 	price, err := strconv.Atoi(req.Header.Get(`Price`))
 
 	if err != nil || price <= 0 {
-		log.Println("[ERROR] PaymentController.handlePaymentByPricePost. Ivalid price value")
+		log.Println("[ERROR] PaymentController.handlePaymentByPricePost. Ivalid price value:", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -59,8 +60,8 @@ func (controller *PaymentController) handlePaymentByPricePost(res http.ResponseW
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(newPaymentJSON)
 }
 
@@ -79,7 +80,7 @@ func (controller *PaymentController) handlePaymentByUidGet(res http.ResponseWrit
 
 	if err != nil {
 		log.Println("[ERROR] PaymentController.handlePaymentByUidGet. service.ReadPaymentByUid returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -96,8 +97,8 @@ func (controller *PaymentController) handlePaymentByUidGet(res http.ResponseWrit
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
 	res.Header().Add(`Content-Type`, `application/json`)
+	res.WriteHeader(http.StatusOK)
 	res.Write(paymentJSON)
 }
 
@@ -112,10 +113,11 @@ func (controller *PaymentController) handlePaymentByUidPut(res http.ResponseWrit
 		return
 	}
 
-	var reqBody []byte
-	n, err := req.Body.Read(reqBody)
+	defer req.Body.Close()
 
-	if err != nil || n <= 0 {
+	reqBody, err := io.ReadAll(req.Body)
+
+	if err != nil {
 		log.Println("[ERROR] PaymentController.handlePaymentByUidPut. Error while reading request body: ", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -135,7 +137,7 @@ func (controller *PaymentController) handlePaymentByUidPut(res http.ResponseWrit
 
 	if err != nil {
 		log.Println("[ERROR] PaymentController.handlePaymentByUidPut. service.UpdatePaymentByUid returned error: ", err)
-		if errors.Is(err, errors.New(serverrors.ErrEntityNotFound)) {
+		if errors.Is(err, serverrors.ErrEntityNotFound) {
 			res.WriteHeader(http.StatusNotFound)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -144,7 +146,7 @@ func (controller *PaymentController) handlePaymentByUidPut(res http.ResponseWrit
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
+	res.WriteHeader(http.StatusNoContent)
 }
 
 func (controller *PaymentController) handlePaymentRequest(res http.ResponseWriter, req *http.Request) {

@@ -4,9 +4,10 @@ import (
 	"container/list"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
-	_ "github.com/jackc/pgx"
+	_ "github.com/lib/pq"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -26,12 +27,12 @@ func (dao *PostgresHotelDAO) SetConnectionString(connStr string) {
 
 func (dao *PostgresHotelDAO) Create(hotel *models.Hotel) (models.Hotel, error) {
 	log.Println("[ERROR] PostgresHotelDAO.Create. Method is not implemented")
-	return models.Hotel{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return models.Hotel{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresHotelDAO) Get() (resLst list.List, err error) {
 	log.Println("[ERROR] PostgresHotelDAO.Get. Method is not implemented")
-	return resLst, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return resLst, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresHotelDAO) GetPaginated(
@@ -40,34 +41,41 @@ func (dao *PostgresHotelDAO) GetPaginated(
 ) (resLst list.List, err error) {
 	if page <= 0 || pageSize <= 0 {
 		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Invalid pages data")
-		return resLst, errors.New(serverrors.ErrInvalidPagesData)
+		return resLst, serverrors.ErrInvalidPagesData
 	}
 
 	db, err := sql.Open(`postgres`, dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Cannot connect to database:", err)
-		return resLst, errors.New(serverrors.ErrDatabaseConnection)
+		return resLst, serverrors.ErrDatabaseConnection
 	}
+
+	defer db.Close()
 
 	rows, err := db.Query(
 		`select * from hotels order by id limit $1 offset $2;`,
 		pageSize,
-		page*pageSize,
+		(page-1)*pageSize,
 	)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Error while executing query:", err)
-		return resLst, errors.New(serverrors.ErrQueryResRead)
+		return resLst, serverrors.ErrQueryResRead
 	}
 
 	for rows.Next() {
 		var hotel models.Hotel
-		err = rows.Scan(&hotel)
+		err = rows.Scan(
+			&hotel.Id, &hotel.Uid,
+			&hotel.Name, &hotel.Country,
+			&hotel.City, &hotel.Address,
+			&hotel.Stars, &hotel.Price,
+		)
 
 		if err != nil {
 			log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Error while reading query result:", err)
-			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+			return list.List{}, serverrors.ErrQueryResRead
 		}
 
 		resLst.PushBack(hotel)
@@ -79,29 +87,36 @@ func (dao *PostgresHotelDAO) GetPaginated(
 func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel, err error) {
 	if hotel.Id <= 0 {
 		log.Println("[ERROR] PostgresHotelDAO.GetById. Invalid ID")
-		return resHotel, errors.New(serverrors.ErrInvalidHotelId)
+		return resHotel, serverrors.ErrInvalidHotelId
 	}
 
 	db, err := sql.Open(`postgres`, dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresHotelDAO.GetById. Cannot connect to database:", err)
-		return resHotel, errors.New(serverrors.ErrDatabaseConnection)
+		return resHotel, serverrors.ErrDatabaseConnection
 	}
+
+	defer db.Close()
 
 	row := db.QueryRow(
 		`select * from hotels where id = $1;`,
 		hotel.Id,
 	)
-	err = row.Scan(&resHotel)
+	err = row.Scan(
+		&resHotel.Id, &resHotel.Uid,
+		&resHotel.Name, &resHotel.Country,
+		&resHotel.City, &resHotel.Address,
+		&resHotel.Stars, &resHotel.Price,
+	)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresHotelDAO.GetById. Entity not found")
-			err = errors.New(serverrors.ErrEntityNotFound)
+			err = serverrors.ErrEntityNotFound
 		} else {
 			log.Println("[ERROR] PostgresHotelDAO.GetById. Error while reading query result:", err)
-			err = errors.New(serverrors.ErrQueryResRead)
+			err = serverrors.ErrQueryResRead
 		}
 	}
 
@@ -113,18 +128,21 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 
 	if err != nil {
 		log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Cannot connect to database:", err)
-		return resLst, errors.New(serverrors.ErrDatabaseConnection)
+		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	rows, err := db.Query(
-		`select * from hotels where $1 = $2;`,
-		attrName, attrValue,
+	defer db.Close()
+
+	queryStr := fmt.Sprintf(
+		`select * from hotels where %s = $1;`,
+		attrName,
 	)
+	rows, err := db.Query(queryStr, attrValue)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Error while executing query:", err)
-			return resLst, errors.New(serverrors.ErrQueryResRead)
+			return resLst, serverrors.ErrQueryResRead
 		}
 
 		return resLst, nil
@@ -132,11 +150,16 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 
 	for rows.Next() {
 		var hotel models.Hotel
-		err = rows.Scan(&hotel)
+		err = rows.Scan(
+			&hotel.Id, &hotel.Uid,
+			&hotel.Name, &hotel.Country,
+			&hotel.City, &hotel.Address,
+			&hotel.Stars, &hotel.Price,
+		)
 
 		if err != nil {
 			log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Error while reading query result:", err)
-			return list.List{}, errors.New(serverrors.ErrQueryResRead)
+			return list.List{}, serverrors.ErrQueryResRead
 		}
 
 		resLst.PushBack(hotel)
@@ -147,15 +170,15 @@ func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (
 
 func (dao *PostgresHotelDAO) Update(hotel *models.Hotel) (models.Hotel, error) {
 	log.Println("[ERROR] PostgresHotelDAO.Update. Method is not implemented")
-	return models.Hotel{}, errors.New(serverrors.ErrMethodIsNotImplemented)
+	return models.Hotel{}, serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresHotelDAO) Delete(hotel *models.Hotel) error {
 	log.Println("[ERROR] PostgresHotelDAO.Delete. Method is not implemented")
-	return errors.New(serverrors.ErrMethodIsNotImplemented)
+	return serverrors.ErrMethodIsNotImplemented
 }
 
 func (dao *PostgresHotelDAO) DeleteByAttr(attrName string, attrValue string) error {
 	log.Println("[ERROR] PostgresHotelDAO.DeleteByAttr. Method is not implemented")
-	return errors.New(serverrors.ErrMethodIsNotImplemented)
+	return serverrors.ErrMethodIsNotImplemented
 }

@@ -1,5 +1,5 @@
 {
     "host": "localhost",
     "port": 8070,
-    "connDb": "host=localhost port=5432 user=program password=test dbname=reservations sslmode=disable"
+    "connDb": "postgres://program:test@localhost:5432/reservations"
 }

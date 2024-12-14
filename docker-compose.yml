@@ -4,7 +4,7 @@ services:
     image: library/postgres:13
     container_name: postgres
     restart: on-failure
-    # network_mode: "host"
+    network_mode: "host"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: "postgres"
@@ -12,8 +12,8 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./postgres/:/docker-entrypoint-initdb.d/
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
 
   gateway:
     build:

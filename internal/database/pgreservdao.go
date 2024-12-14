@@ -2,14 +2,15 @@ package database
 
 import (
 	"container/list"
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -53,34 +54,31 @@ func (dao *PostgresReservationDAO) Create(reservation *models.Reservation) (newR
 		return newReservation, err
 	}
 
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.Create. Cannot connect to database:", err)
 		return newReservation, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	row := db.QueryRow(
+	row := conn.QueryRow(
+		context.Background(),
 		`insert into reservation (reservation_uid, username, payment_uid, hotel_id, status, start_date, end_date)
 		values ($1, $2, $3, $4, $5, $6, $7)
-		returning *;`,
+		returning id;`,
 		reservation.Uid, reservation.Username,
 		reservation.PaymentUid, reservation.HotelId,
 		reservation.Status, reservation.StartDate,
 		reservation.EndDate,
 	)
 
-	err = row.Scan(
-		&newReservation.Id, &newReservation.Uid,
-		&newReservation.Username, &newReservation.PaymentUid,
-		&newReservation.HotelId, &newReservation.Status,
-		&newReservation.StartDate, &newReservation.EndDate,
-	)
+	newReservation = *reservation
+	err = row.Scan(&newReservation.Id)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresReservationDAO.Create. Entity not found")
 			err = serverrors.ErrEntityNotFound
 		} else {
@@ -111,24 +109,24 @@ func (dao *PostgresReservationDAO) GetById(reservation *models.Reservation) (mod
 }
 
 func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.GetByAttribute. Cannot connect to database:", err)
 		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	queryStr := fmt.Sprintf(
-		`select * from reservation where %s = $1;`,
+		`select id, reservation_uid, username, payment_uid, hotel_id, status, start_date::text, end_date::text from reservation where %s = $1;`,
 		attrName,
 	)
 
-	rows, err := db.Query(queryStr, attrValue)
+	rows, err := conn.Query(context.Background(), queryStr, attrValue)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if !errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresReservationDAO.GetByAttribute. Error while executing query:", err)
 			return resLst, serverrors.ErrQueryResRead
 		}
@@ -159,22 +157,23 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 }
 
 func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (updatedReservation models.Reservation, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.Update. Cannot connect to database:", err)
 		return updatedReservation, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	log.Println("[TRACE] PostgresReservationDAO.Update. Status =", reservation.Status)
 
-	row := db.QueryRow(
+	row := conn.QueryRow(
+		context.Background(),
 		`update reservation
 		set username = $1, payment_uid = $2, hotel_id = $3, status = $4, start_date = $5, end_date = $6
 		where reservation_uid = $7
-		returning *`,
+		returning id, reservation_uid, username, payment_uid, hotel_id, status, start_date::text, end_date::text`,
 		reservation.Username, reservation.PaymentUid, reservation.HotelId,
 		reservation.Status, reservation.StartDate, reservation.EndDate,
 		reservation.Uid,
@@ -188,7 +187,7 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresReservationDAO.Update. Entity not found")
 			err = serverrors.ErrEntityNotFound
 		} else {
@@ -206,16 +205,17 @@ func (dao *PostgresReservationDAO) Delete(reservation *models.Reservation) error
 }
 
 func (dao *PostgresReservationDAO) DeleteByAttr(attrName string, attrValue string) (err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresReservationDAO.DeleteByAttr. Cannot connect to database:", err)
 		return serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	_, err = db.Exec(
+	_, err = conn.Exec(
+		context.Background(),
 		`delete from reservation where $1 = $2;`,
 		attrName, attrValue,
 	)

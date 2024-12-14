@@ -2,12 +2,12 @@ package database
 
 import (
 	"container/list"
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 	"log"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -49,23 +49,24 @@ func (dao *PostgresLoyaltyDAO) GetById(loyalty *models.Loyalty) (models.Loyalty,
 }
 
 func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresLoyaltyDAO.GetByAttribute. Cannot connect to database:", err)
 		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	queryStr := fmt.Sprintf(
 		`select * from loyalty where %s = $1;`,
 		attrName,
 	)
-	rows, err := db.Query(queryStr, attrValue)
+
+	rows, err := conn.Query(context.Background(), queryStr, attrValue)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if !errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresLoyaltyDAO.GetByAttribute. Error while executing query:", err)
 			return resLst, serverrors.ErrQueryResRead
 		}
@@ -95,16 +96,17 @@ func (dao *PostgresLoyaltyDAO) GetByAttribute(attrName string, attrValue string)
 }
 
 func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty models.Loyalty, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresLoyaltyDAO.Update. Cannot connect to database:", err)
 		return updatedLoyalty, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	row := db.QueryRow(
+	row := conn.QueryRow(
+		context.Background(),
 		`update loyalty
 		set username = $1, reservation_count = $2, status = $3, discount = $4
 		where id = $5
@@ -120,7 +122,7 @@ func (dao *PostgresLoyaltyDAO) Update(loyalty *models.Loyalty) (updatedLoyalty m
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresLoyaltyDAO.Update. Entity not found")
 			err = serverrors.ErrEntityNotFound
 		} else {

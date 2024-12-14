@@ -2,12 +2,13 @@ package database
 
 import (
 	"container/list"
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 	"log"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -44,22 +45,23 @@ func (dao *PostgresHotelDAO) GetPaginated(
 		return resLst, serverrors.ErrInvalidPagesData
 	}
 
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Cannot connect to database:", err)
 		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	rows, err := db.Query(
+	rows, err := conn.Query(
+		context.Background(),
 		`select * from hotels order by id limit $1 offset $2;`,
 		pageSize,
 		(page-1)*pageSize,
 	)
 
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		log.Println("[ERROR] PostgresHotelDAO.GetPaginated. Error while executing query:", err)
 		return resLst, serverrors.ErrQueryResRead
 	}
@@ -92,16 +94,17 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel
 		return resHotel, serverrors.ErrInvalidHotelId
 	}
 
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresHotelDAO.GetById. Cannot connect to database:", err)
 		return resHotel, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	row := db.QueryRow(
+	row := conn.QueryRow(
+		context.Background(),
 		`select * from hotels where id = $1;`,
 		hotel.Id,
 	)
@@ -114,7 +117,7 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresHotelDAO.GetById. Entity not found")
 			err = serverrors.ErrEntityNotFound
 		} else {
@@ -127,23 +130,23 @@ func (dao *PostgresHotelDAO) GetById(hotel *models.Hotel) (resHotel models.Hotel
 }
 
 func (dao *PostgresHotelDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Cannot connect to database:", err)
 		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	queryStr := fmt.Sprintf(
 		`select * from hotels where %s = $1;`,
 		attrName,
 	)
-	rows, err := db.Query(queryStr, attrValue)
+	rows, err := conn.Query(context.Background(), queryStr, attrValue)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if !errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresHotelDAO.GetByAttribute. Error while executing query:", err)
 			return resLst, serverrors.ErrQueryResRead
 		}

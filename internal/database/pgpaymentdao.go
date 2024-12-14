@@ -2,13 +2,14 @@ package database
 
 import (
 	"container/list"
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 	"log"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/agarmirus/ds-lab02/internal/models"
 	"github.com/agarmirus/ds-lab02/internal/serverrors"
@@ -46,16 +47,17 @@ func (dao *PostgresPaymentDAO) Create(payment *models.Payment) (newPayment model
 		return newPayment, err
 	}
 
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresPaymentDAO.Create. Cannot connect to database:", err)
 		return newPayment, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	row := db.QueryRow(
+	row := conn.QueryRow(
+		context.Background(),
 		`insert into payment (payment_uid, status, price)
 		values ($1, $2, $3)
 		returning *;`,
@@ -68,7 +70,7 @@ func (dao *PostgresPaymentDAO) Create(payment *models.Payment) (newPayment model
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresPaymentDAO.Create. Entity not found")
 			err = serverrors.ErrEntityNotFound
 		} else {
@@ -99,23 +101,24 @@ func (dao *PostgresPaymentDAO) GetById(payment *models.Payment) (models.Payment,
 }
 
 func (dao *PostgresPaymentDAO) GetByAttribute(attrName string, attrValue string) (resLst list.List, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresPaymentDAO.GetByAttribute. Cannot connect to database:", err)
 		return resLst, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	queryStr := fmt.Sprintf(
 		`select * from payment where %s = $1;`,
 		attrName,
 	)
-	rows, err := db.Query(queryStr, attrValue)
+
+	rows, err := conn.Query(context.Background(), queryStr, attrValue)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if !errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresPaymentDAO.GetByAttribute. Error while executing query:", err)
 			return resLst, serverrors.ErrQueryResRead
 		}
@@ -144,16 +147,17 @@ func (dao *PostgresPaymentDAO) GetByAttribute(attrName string, attrValue string)
 }
 
 func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (updatedPayment models.Payment, err error) {
-	db, err := sql.Open(`postgres`, dao.connStr)
+	conn, err := pgx.Connect(context.Background(), dao.connStr)
 
 	if err != nil {
 		log.Println("[ERROR] PostgresPaymentDAO.Update. Cannot connect to database:", err)
 		return updatedPayment, serverrors.ErrDatabaseConnection
 	}
 
-	defer db.Close()
+	defer conn.Close(context.Background())
 
-	row := db.QueryRow(
+	row := conn.QueryRow(
+		context.Background(),
 		`update payment
 		set status = $1, price = $2
 		where payment_uid = $3
@@ -168,7 +172,7 @@ func (dao *PostgresPaymentDAO) Update(payment *models.Payment) (updatedPayment m
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			log.Println("[ERROR] PostgresPaymentDAO.Update. Entity not found")
 			err = serverrors.ErrEntityNotFound
 		} else {

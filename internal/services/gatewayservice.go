@@ -756,7 +756,7 @@ func (service *GatewayService) ReadUserReservations(
 		return reservsResSlice, err
 	}
 
-	models.ReservsSliceToReservRes(reservsResSlice, userReservsSlice, hotelsMap, paymentsMap)
+	models.ReservsSliceToReservRes(&reservsResSlice, userReservsSlice, hotelsMap, paymentsMap)
 
 	return reservsResSlice, nil
 }
@@ -786,7 +786,7 @@ func (service *GatewayService) CreateReservation(
 
 	loyalty, err := service.performLoyaltyByUsernameGetRequest(username)
 
-	if err != nil && !errors.Is(err, serverrors.ErrEntityNotFound) {
+	if err != nil {
 		log.Println("[ERROR] GatewayService.CreateReservation. performLoyaltyByUsernameGetRequest returned error:", err)
 		return crReservRes, err
 	}
@@ -796,8 +796,10 @@ func (service *GatewayService) CreateReservation(
 	nightsCount := int(endDate.Sub(startDate).Hours() / 24)
 	price := nightsCount * hotel.Price
 
+	log.Println("[TRACE] GatewayService.CreateReservation. Loyalty discount =", loyalty.Discount)
+
 	if loyalty.Discount > 0 {
-		price = int(math.Round(float64(price) * float64(1.0-loyalty.Discount/100.0)))
+		price = int(math.Round(float64(price) * (1.0 - float64(loyalty.Discount)/100.0)))
 	}
 
 	payment, err := service.performPaymentPostRequest(price)

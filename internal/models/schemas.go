@@ -188,7 +188,7 @@ func ReservToReservRes(
 }
 
 func ReservsSliceToReservRes(
-	reservsResSlice []ReservationResponse,
+	reservsResSlice *[]ReservationResponse,
 	userReservsSlice []Reservation,
 	hotelsMap map[int]Hotel,
 	paymentsMap map[string]Payment,
@@ -198,11 +198,11 @@ func ReservsSliceToReservRes(
 	for i := 0; i < totalElements; i++ {
 		var reservRes ReservationResponse
 		hotel := hotelsMap[userReservsSlice[i].HotelId]
-		payment := paymentsMap[userReservsSlice[i].Uid]
+		payment := paymentsMap[userReservsSlice[i].PaymentUid]
 
 		ReservToReservRes(&reservRes, &userReservsSlice[i], &hotel, &payment)
 
-		reservsResSlice = append(reservsResSlice, reservRes)
+		*reservsResSlice = append(*reservsResSlice, reservRes)
 	}
 }
 
@@ -223,7 +223,7 @@ func ReservsSliceToUserInfoRes(
 	loyalty *Loyalty,
 ) {
 	userInfoRes.Reservations = make([]ReservationResponse, 0)
-	ReservsSliceToReservRes(userInfoRes.Reservations, userReservsSlice, hotelsMap, paymentsMap)
+	ReservsSliceToReservRes(&userInfoRes.Reservations, userReservsSlice, hotelsMap, paymentsMap)
 	LoyaltyToLoyaltyInfoRes(&userInfoRes.Loyalty, loyalty)
 }
 

@@ -122,6 +122,7 @@ func (controller *GatewayController) handleUserReservationsGet(res http.Response
 	reservsResSliceJSON, err = json.Marshal(reservsResSlice)
 
 	if err == nil {
+		log.Println("[TRACE] GatewayController.handleUserReservationsGet. Answer:", string(reservsResSliceJSON))
 		res.Header().Add(`Content-Type`, `application/json`)
 		res.WriteHeader(http.StatusOK)
 		res.Write(reservsResSliceJSON)

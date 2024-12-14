@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx"
@@ -119,7 +120,7 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 	defer conn.Close(context.Background())
 
 	queryStr := fmt.Sprintf(
-		`select id, reservation_uid, username, payment_uid, hotel_id, status, start_date::text, end_date::text from reservation where %s = $1;`,
+		`select id, reservation_uid, username, payment_uid, hotel_id, status, start_date, end_date from reservation where %s = $1;`,
 		attrName,
 	)
 
@@ -138,17 +139,21 @@ func (dao *PostgresReservationDAO) GetByAttribute(attrName string, attrValue str
 
 	for rows.Next() {
 		var reservation models.Reservation
+		var startDate, endDate time.Time
 		err = rows.Scan(
 			&reservation.Id, &reservation.Uid,
 			&reservation.Username, &reservation.PaymentUid,
 			&reservation.HotelId, &reservation.Status,
-			&reservation.StartDate, &reservation.EndDate,
+			&startDate, &endDate,
 		)
 
 		if err != nil {
 			log.Println("[ERROR] PostgresReservationDAO.GetByAttribute. Error while reading query result:", err)
 			return list.List{}, serverrors.ErrQueryResRead
 		}
+
+		reservation.StartDate = startDate.Format(time.DateOnly)
+		reservation.EndDate = endDate.Format(time.DateOnly)
 
 		resLst.PushBack(reservation)
 	}
@@ -173,17 +178,19 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 		`update reservation
 		set username = $1, payment_uid = $2, hotel_id = $3, status = $4, start_date = $5, end_date = $6
 		where reservation_uid = $7
-		returning id, reservation_uid, username, payment_uid, hotel_id, status, start_date::text, end_date::text`,
+		returning *`,
 		reservation.Username, reservation.PaymentUid, reservation.HotelId,
 		reservation.Status, reservation.StartDate, reservation.EndDate,
 		reservation.Uid,
 	)
 
+	var startDate, endDate time.Time
+
 	err = row.Scan(
 		&updatedReservation.Id, &updatedReservation.Uid,
 		&updatedReservation.Username, &updatedReservation.PaymentUid,
 		&updatedReservation.HotelId, &updatedReservation.Status,
-		&updatedReservation.StartDate, &updatedReservation.EndDate,
+		&startDate, &endDate,
 	)
 
 	if err != nil {
@@ -195,6 +202,9 @@ func (dao *PostgresReservationDAO) Update(reservation *models.Reservation) (upda
 			err = serverrors.ErrQueryResRead
 		}
 	}
+
+	updatedReservation.StartDate = startDate.Format(time.DateOnly)
+	updatedReservation.EndDate = endDate.Format(time.DateOnly)
 
 	return updatedReservation, err
 }

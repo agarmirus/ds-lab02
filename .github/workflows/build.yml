@@ -49,7 +49,7 @@ jobs:
         env:
           WAIT_PORTS: 8080,8070,8060,8050
       
-      - name: Sleep for one minute
+      - name: Sleep
         run: sleep 30s
         shell: bash
 
